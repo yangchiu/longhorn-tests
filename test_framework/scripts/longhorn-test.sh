@@ -61,7 +61,8 @@ run_longhorn_tests(){
             kubectl exec -i ${LONGHORN_TEST_POD_NAME} -- tail -n +$((LOG_LINE_COUNT+1)) /tmp/longhorn-pytest
             LOG_LINE_COUNT=NEW_LINE_COUNT
         fi
-        #echo "LOG_LINE_COUNT=${LOG_LINE_COUNT}"
+        echo "LOG_LINE_COUNT=${LOG_LINE_COUNT}"
+        echo "NEW_LINE_COUNT=${NEW_LINE_COUNT}"
         #echo "LOG_LINE_COUNT+1=$((LOG_LINE_COUNT+1))"
         sleep 1m
     done

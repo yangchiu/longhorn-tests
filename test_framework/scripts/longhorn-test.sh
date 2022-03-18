@@ -55,7 +55,7 @@ run_longhorn_tests(){
     # wait longhorn tests to complete
     local LOG_LINE_COUNT=0
     while [[ -z "`kubectl get pods ${LONGHORN_TEST_POD_NAME} --no-headers=true | awk '{print $3}' | grep -v Running`"  ]]; do
-        echo "\nLonghorn tests still running ... rechecking in 1m"
+        echo -e "\nLonghorn tests still running ... rechecking in 1m"
         kubectl exec -i ${LONGHORN_TEST_POD_NAME} -- tail -n +$((LOG_LINE_COUNT+1)) /tmp/longhorn-pytest
         LOG_LINE_COUNT=`kubectl exec -i ${LONGHORN_TEST_POD_NAME} -- bash -c 'wc -l < /tmp/longhorn-pytest'`
         #echo "LOG_LINE_COUNT=${LOG_LINE_COUNT}"

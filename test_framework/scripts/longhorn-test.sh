@@ -2,9 +2,9 @@
 
 
 set_kubeconfig_envvar(){
-  export KUBECONFIG=${PWD}/kubeconfig
-  kubectl config set-context local-c1
-  kubectl config use-context local-c1
+  export KUBECONFIG=${PWD}/rke_cluster.yaml
+  kubectl config set-context local
+  kubectl config use-context local
   kubectl get node -o wide
 }
 

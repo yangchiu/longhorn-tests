@@ -58,7 +58,7 @@ run_longhorn_tests(){
         sleep 5m
     done
 
-	kubectl logs ${LONGHORN_TEST_POD_NAME}  >> "${PWD}/longhorn-test-junit-report.xml"
+	kubectl logs ${LONGHORN_TEST_POD_NAME}  >> "longhorn-test-junit-report.xml"
 }
 
 

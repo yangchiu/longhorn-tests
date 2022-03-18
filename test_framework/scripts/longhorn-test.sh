@@ -1,22 +1,11 @@
 #!/usr/bin/env bash
 
-LONGHORN_NAMESPACE="longhorn-system"
 
 set_kubeconfig_envvar(){
-	ARCH=${1}
-	BASEDIR=${2}
-
-    if [[ ${ARCH} == "amd64" ]] ; then
-		if [[ ${TF_VAR_k8s_distro_name} == [rR][kK][eE] ]]; then
-			export KUBECONFIG="${BASEDIR}/kube_config_rke.yml"
-		elif [[ ${TF_VAR_k8s_distro_name} == [rR][kK][eE]2 ]]; then
-			export KUBECONFIG="${BASEDIR}/terraform/aws/${DISTRO}/rke2.yaml"
-		else
-			export KUBECONFIG="${BASEDIR}/terraform/aws/${DISTRO}/k3s.yaml"
-		fi
-	elif [[ ${ARCH} == "arm64"  ]]; then
-		export KUBECONFIG="${BASEDIR}/terraform/aws/${DISTRO}/k3s.yaml"
-	fi
+  export KUBECONFIG=${PWD}/kubeconfig
+  kubectl config set-context local-c1
+  kubectl config use-context local-c1
+  kubectl get node -o wide
 }
 
 
@@ -92,7 +81,7 @@ run_longhorn_tests(){
 
 
 main(){
-	set_kubeconfig_envvar ${TF_VAR_arch} ${TF_VAR_tf_workspace}
+	set_kubeconfig_envvar
 	install_backupstores
 	run_longhorn_tests ${WORKSPACE}
 }

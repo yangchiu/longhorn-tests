@@ -27,21 +27,21 @@ node {
             }
         }
 
-        stage ('longhorn setup & tests') {
+        stage ('longhorn setup') {
             sh  "echo 'dummy longhorn setup ...'"
             sh  "echo 'dummy longhorn setup ...'"
             sh  "echo 'dummy longhorn setup completed!'"
         }
 
         stage ('longhorn tests') {
-            sh  " docker exec ${JOB_BASE_NAME}-${BUILD_NUMBER} ${TF_VAR_tf_workspace}/scripts/longhorn-test.sh"
+            sh  " docker exec ${JOB_BASE_NAME}-${BUILD_NUMBER} test_framework/scripts/longhorn-test.sh"
         }
 
         stage ('report generation') {
-            sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${TF_VAR_tf_workspace}/longhorn-test-junit-report.xml ."
+            sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:test_framework/longhorn-test-junit-report.xml ."
 
             if(params.LONGHORN_UPGRADE_TEST) {
-                sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${TF_VAR_tf_workspace}/longhorn-test-upgrade-junit-report.xml ."
+                sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:test_framework/longhorn-test-upgrade-junit-report.xml ."
                 summary = junit 'longhorn-test-upgrade-junit-report.xml, longhorn-test-junit-report.xml'
             }
             else {

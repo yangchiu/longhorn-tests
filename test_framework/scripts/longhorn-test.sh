@@ -27,6 +27,18 @@ run_longhorn_tests(){
 
   echo "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
 
+  local PYTEST_COMMAND_ARGS='"-s", "--junitxml='${LONGHORN_JUNIT_REPORT_PATH}'", "-k", "test_volume_basic"'
+	if [[ -n ${PYTEST_CUSTOM_OPTIONS} ]]; then
+        PYTEST_CUSTOM_OPTIONS=(${PYTEST_CUSTOM_OPTIONS})
+
+        for OPT in "${PYTEST_CUSTOM_OPTIONS[@]}"; do
+            PYTEST_COMMAND_ARGS=${PYTEST_COMMAND_ARGS}', "'${OPT}'"'
+        done
+  fi
+
+	## generate test pod manifest
+  yq e -i 'select(.spec.containers[0] != null).spec.containers[0].args=['"${PYTEST_COMMAND_ARGS}"']' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
+
 	kubectl apply -f ${LONGHORN_TESTS_MANIFEST_FILE_PATH}
 
 	local RETRY_COUNTS=60

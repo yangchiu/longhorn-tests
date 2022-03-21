@@ -134,7 +134,6 @@ spec:
             operator: In
             values:
             - test-job
-        topologyKey: topology.kubernetes.io/zone
   containers:
   - name: keepalive
     image: busybox

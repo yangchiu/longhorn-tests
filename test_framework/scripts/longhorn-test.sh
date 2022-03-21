@@ -27,7 +27,7 @@ run_longhorn_tests(){
 
   echo "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
 
-  local PYTEST_COMMAND_ARGS='"-s", "--junitxml='${LONGHORN_JUNIT_REPORT_PATH}'", "-k", "test_basic"'
+  local PYTEST_COMMAND_ARGS='"-s", "--junitxml='${LONGHORN_JUNIT_REPORT_PATH}'", "-k", "test_allow_volume_creation_with_degraded_availability_restore "'
 	if [[ -n ${PYTEST_CUSTOM_OPTIONS} ]]; then
         PYTEST_CUSTOM_OPTIONS=(${PYTEST_CUSTOM_OPTIONS})
 

@@ -59,13 +59,13 @@ metadata:
   labels:
     longhorn-test: test-job
 spec:
-  initContainers:
+  containers:
   - name: longhorn-test-pod
     image: deersheep330/test
 #    args: [
 #           "-x", "-s",
 #           "-m", "coretest",
-#           "-k", "test_backing_image",
+#           "-k", "test_recurring_job",
 #           "--skip-recurring-job-test",
 #           ]
     #TEST_FRAMEWORK_ARGS_PLACEHOLDER
@@ -96,13 +96,6 @@ spec:
       mountPropagation: Bidirectional
     - name: test-report
       mountPath: /tmp/test-report
-  containers:
-  - image: busybox
-    name: keepalive
-    command: [ "bin/sh", "-c", "sleep 300" ]
-    volumeMounts:
-    - name: test-report
-      mountPath: /tmp/test-report
   dnsConfig:
     nameservers:
       - 8.8.8.8
@@ -121,6 +114,35 @@ spec:
     hostPath:
       path: /var/lib/longhorn/
   - name: test-report
-    emptyDir: {}
+    hostPath:
+      path: /tmp/test-report/
   restartPolicy: Never
   serviceAccountName: longhorn-test-service-account
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-report
+  namespace: default
+spec:
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: longhorn-test
+            operator: In
+            values:
+            - test-job
+        topologyKey: topology.kubernetes.io/zone
+  containers:
+  - name: keepalive
+    image: busybox
+    command: [ "tail", "-f", "/dev/null" ]
+    volumeMounts:
+    - name: test-report
+      mountPath: /tmp/test-report
+  volumes:
+  - name: test-report
+    hostPath:
+      path: /tmp/test-report/

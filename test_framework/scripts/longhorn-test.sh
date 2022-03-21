@@ -68,7 +68,7 @@ run_longhorn_tests(){
     #    sleep 1m
     #done
 
-	kubectl cp test-report:${LONGHORN_JUNIT_REPORT_PATH} .
+	kubectl cp test-report:${LONGHORN_JUNIT_REPORT_PATH} ./longhorn-test-junit-report.xml
 }
 
 

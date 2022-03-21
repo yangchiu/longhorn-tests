@@ -23,7 +23,7 @@ run_longhorn_tests(){
 
 	LONGHORN_JUNIT_REPORT_PATH=`yq e '.spec.containers[0].env[] | select(.name == "LONGHORN_JUNIT_REPORT_PATH").value' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"`
 
-	LONGHORN_TEST_POD_NAME=`yq e 'select(.spec.containers[0] != null).metadata.name' ${LONGHORN_TESTS_MANIFEST_FILE_PATH}`
+	LONGHORN_TEST_POD_NAME=longhorn-test
 
   echo "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
 

@@ -124,6 +124,8 @@ kind: Pod
 metadata:
   name: test-report
   namespace: default
+  labels:
+    test-report: test-report
 spec:
   affinity:
     podAffinity:

@@ -38,10 +38,10 @@ node {
         }
 
         stage ('report generation') {
-            sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/integration/tests/longhorn-test-junit-report.xml ."
+            sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/longhorn-test-junit-report.xml ."
 
             if(params.LONGHORN_UPGRADE_TEST) {
-                sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:test_framework/longhorn-test-upgrade-junit-report.xml ."
+                sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/longhorn-test-upgrade-junit-report.xml ."
                 summary = junit 'longhorn-test-upgrade-junit-report.xml, longhorn-test-junit-report.xml'
             }
             else {

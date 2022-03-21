@@ -34,7 +34,7 @@ node {
         }
 
         stage ('longhorn tests') {
-            sh  " docker exec ${JOB_BASE_NAME}-${BUILD_NUMBER} test_framework/scripts/longhorn-test.sh"
+            sh  " docker exec ${JOB_BASE_NAME}-${BUILD_NUMBER} test_framework/scripts/longhorn-setup.sh"
         }
 
         stage ('report generation') {

@@ -59,13 +59,13 @@ metadata:
   labels:
     longhorn-test: test-job
 spec:
-  containers:
+  initContainers:
   - name: longhorn-test-pod
     image: deersheep330/test
 #    args: [
 #           "-x", "-s",
 #           "-m", "coretest",
-#           "-k", "test_recurring_job",
+#           "-k", "test_backing_image",
 #           "--skip-recurring-job-test",
 #           ]
     #TEST_FRAMEWORK_ARGS_PLACEHOLDER
@@ -74,7 +74,7 @@ spec:
       privileged: true
     env:
     - name: LONGHORN_JUNIT_REPORT_PATH
-      value: /integration/tests/longhorn-test-junit-report.xml
+      value: /tmp/test-report/longhorn-test-junit-report.xml
     - name: LONGHORN_BACKUPSTORES
       value: "s3://backupbucket@us-east-1/backupstore$minio-secret, nfs://longhorn-test-nfs-svc.default:/opt/backupstore"
     - name: LONGHORN_BACKUPSTORE_POLL_INTERVAL
@@ -94,6 +94,15 @@ spec:
     - name: longhorn
       mountPath: /var/lib/longhorn/
       mountPropagation: Bidirectional
+    - name: test-report
+      mountPath: /tmp/test-report
+  containers:
+  - image: busybox
+    name: keepalive
+    command: [ "bin/sh", "-c", "sleep 300" ]
+    volumeMounts:
+    - name: test-report
+      mountPath: /tmp/test-report
   dnsConfig:
     nameservers:
       - 8.8.8.8
@@ -111,5 +120,7 @@ spec:
   - name: longhorn
     hostPath:
       path: /var/lib/longhorn/
+  - name: test-report
+    emptyDir: {}
   restartPolicy: Never
   serviceAccountName: longhorn-test-service-account

@@ -27,7 +27,7 @@ run_longhorn_tests(){
 
   echo "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
 
-  local PYTEST_COMMAND_ARGS='"-s", "--junitxml='${LONGHORN_JUNIT_REPORT_PATH}'", "-k", "test_basic"'
+  local PYTEST_COMMAND_ARGS='"-s", "--junitxml='${LONGHORN_JUNIT_REPORT_PATH}'", "-k", "test_setting"'
 	if [[ -n ${PYTEST_CUSTOM_OPTIONS} ]]; then
         PYTEST_CUSTOM_OPTIONS=(${PYTEST_CUSTOM_OPTIONS})
 
@@ -68,7 +68,7 @@ run_longhorn_tests(){
     #    sleep 1m
     #done
 
-	kubectl cp ${LONGHORN_TEST_POD_NAME}:${LONGHORN_JUNIT_REPORT_PATH} /longhorn-test-junit-report.xml
+	kubectl cp ${LONGHORN_TEST_POD_NAME}:${LONGHORN_JUNIT_REPORT_PATH} .
 }
 
 

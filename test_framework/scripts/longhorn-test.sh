@@ -23,7 +23,7 @@ run_longhorn_tests(){
 
 	LONGHORN_JUNIT_REPORT_PATH=`yq e '.spec.containers[0].env[] | select(.name == "LONGHORN_JUNIT_REPORT_PATH").value' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"`
 
-	LONGHORN_TEST_POD_NAME=longhorn-test
+	LONGHORN_TEST_POD_NAME=`yq e 'select(.metadata.labels != null and .spec.containers[0] != null).metadata.name' ${LONGHORN_TESTS_MANIFEST_FILE_PATH}`
 
   echo "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
 
@@ -37,7 +37,7 @@ run_longhorn_tests(){
   fi
 
 	## generate test pod manifest
-  yq e -i 'select(.spec.containers[0] != null).spec.containers[0].args=['"${PYTEST_COMMAND_ARGS}"']' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
+  yq e -i 'select(.metadata.labels != null and .spec.containers[0] != null).spec.containers[0].args=['"${PYTEST_COMMAND_ARGS}"']' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
 
 	kubectl apply -f ${LONGHORN_TESTS_MANIFEST_FILE_PATH}
 

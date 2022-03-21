@@ -54,6 +54,7 @@ node {
         throw e
     } finally {
         stage('releasing resources') {
+            sh "docker stop ${JOB_BASE_NAME}-${BUILD_NUMBER}"
             sh "docker rm -v ${JOB_BASE_NAME}-${BUILD_NUMBER}"
             sh "docker rmi ${imageName}"
             if(summary){

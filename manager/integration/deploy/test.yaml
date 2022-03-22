@@ -96,6 +96,12 @@ spec:
       mountPropagation: Bidirectional
     - name: test-report
       mountPath: /tmp/test-report
+  - name: keepalive
+    image: busybox
+    command: [ "tail", "-f", "/dev/null" ]
+    volumeMounts:
+      - name: test-report
+        mountPath: /tmp/test-report
   dnsConfig:
     nameservers:
       - 8.8.8.8
@@ -118,33 +124,3 @@ spec:
       path: /tmp/test-report/
   restartPolicy: Never
   serviceAccountName: longhorn-test-service-account
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-report
-  namespace: default
-  labels:
-    test-report: test-report
-spec:
-  affinity:
-    podAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: longhorn-test
-            operator: In
-            values:
-            - test-job
-        topologyKey: kubernetes.io/hostname
-  containers:
-  - name: keepalive
-    image: busybox
-    command: [ "tail", "-f", "/dev/null" ]
-    volumeMounts:
-    - name: test-report
-      mountPath: /tmp/test-report
-  volumes:
-  - name: test-report
-    hostPath:
-      path: /tmp/test-report/

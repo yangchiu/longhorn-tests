@@ -60,7 +60,7 @@ metadata:
     longhorn-test: test-job
 spec:
   containers:
-  - name: longhorn-test-pod
+  - name: longhorn-test-container
     image: longhornio/longhorn-manager-test:master-head
 #    args: [
 #           "-x", "-s",

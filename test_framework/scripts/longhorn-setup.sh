@@ -204,15 +204,15 @@ run_longhorn_upgrade_test(){
 
 	# wait upgrade test pod to start running
     while [[ -n "`kubectl get pods longhorn-test-upgrade --no-headers=true | awk '{print $3}' | grep -v \"Running\|Completed\"`"  ]]; do
-		echo "waiting upgrade test pod to be in running state ... rechecking in 10s"
-		sleep 10s
+		echo "waiting upgrade test pod to be in running state ... rechecking in 5s"
+		sleep 5s
     done
 
     # wait upgrade test to complete
     kubectl logs ${LONGHORN_UPGRADE_TEST_POD_NAME} -f
 
 	# get upgrade test junit xml report
-  kubectl cp test-report:${LONGHORN_JUNIT_REPORT_PATH} "${TF_VAR_tf_workspace}/longhorn-test-upgrade-junit-report.xml"
+  kubectl cp ${LONGHORN_UPGRADE_TEST_POD_NAME}:${LONGHORN_JUNIT_REPORT_PATH} "${TF_VAR_tf_workspace}/longhorn-test-upgrade-junit-report.xml" -c keepalive
 }
 
 
@@ -262,8 +262,8 @@ run_longhorn_tests(){
 	local RETRIES=0
 	# wait longhorn tests pod to start running
     while [[ -n "`kubectl get pods "${LONGHORN_TEST_POD_NAME}" --no-headers=true | awk '{print $3}' | grep -v \"Running\|Completed\"`"  ]]; do
-        echo "waiting longhorn test pod to be in running state ... rechecking in 10s"
-        sleep 10s
+        echo "waiting longhorn test pod to be in running state ... rechecking in 5s"
+        sleep 5s
 		RETRIES=$((RETRIES+1))
 
 		if [[ ${RETRIES} -eq ${RETRY_COUNTS} ]]; then echo "Error: longhorn test pod start timeout"; exit 1 ; fi
@@ -272,7 +272,7 @@ run_longhorn_tests(){
     # wait longhorn tests to complete
     kubectl logs ${LONGHORN_TEST_POD_NAME} -f
 
-  kubectl cp test-report:${LONGHORN_JUNIT_REPORT_PATH} "${TF_VAR_tf_workspace}/longhorn-test-junit-report.xml"
+  kubectl cp ${LONGHORN_TEST_POD_NAME}:${LONGHORN_JUNIT_REPORT_PATH} "${TF_VAR_tf_workspace}/longhorn-test-junit-report.xml" -c keepalive
 }
 
 

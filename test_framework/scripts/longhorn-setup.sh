@@ -203,7 +203,7 @@ run_longhorn_upgrade_test(){
 	kubectl apply -f ${LONGHORN_UPGRADE_TESTS_MANIFEST_FILE_PATH}
 
 	# wait upgrade test pod to start running
-    while [[ -n "`kubectl get pods longhorn-test-upgrade --no-headers=true | awk '{print $3}' | grep -v \"Running\|Completed\"`"  ]]; do
+    while [[ -n "`kubectl get pod longhorn-test -o=jsonpath='{.status.containerStatuses[?(@.name=="longhorn-test-container")].state}' | grep -v \"running\|terminated\"`"  ]]; do
 		echo "waiting upgrade test pod to be in running state ... rechecking in 10s"
 		sleep 10s
     done
@@ -261,7 +261,7 @@ run_longhorn_tests(){
 	local RETRY_COUNTS=60
 	local RETRIES=0
 	# wait longhorn tests pod to start running
-    while [[ -n "`kubectl get pods "${LONGHORN_TEST_POD_NAME}" --no-headers=true | awk '{print $3}' | grep -v \"Running\|Completed\"`"  ]]; do
+    while [[ -n "`kubectl get pod longhorn-test -o=jsonpath='{.status.containerStatuses[?(@.name=="longhorn-test-container")].state}' | grep -v \"running\|terminated\"`"  ]]; do
         echo "waiting longhorn test pod to be in running state ... rechecking in 10s"
         sleep 10s
 		RETRIES=$((RETRIES+1))

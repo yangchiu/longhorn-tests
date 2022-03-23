@@ -204,8 +204,8 @@ run_longhorn_upgrade_test(){
 
 	# wait upgrade test pod to start running
     while [[ -n "`kubectl get pods longhorn-test-upgrade --no-headers=true | awk '{print $3}' | grep -v \"Running\|Completed\"`"  ]]; do
-		echo "waiting upgrade test pod to be in running state ... rechecking in 3s"
-		sleep 3s
+		echo "waiting upgrade test pod to be in running state ... rechecking in 10s"
+		sleep 10s
     done
 
     # wait upgrade test to complete
@@ -262,8 +262,8 @@ run_longhorn_tests(){
 	local RETRIES=0
 	# wait longhorn tests pod to start running
     while [[ -n "`kubectl get pods "${LONGHORN_TEST_POD_NAME}" --no-headers=true | awk '{print $3}' | grep -v \"Running\|Completed\"`"  ]]; do
-        echo "waiting longhorn test pod to be in running state ... rechecking in 3s"
-        sleep 3s
+        echo "waiting longhorn test pod to be in running state ... rechecking in 10s"
+        sleep 10s
 		RETRIES=$((RETRIES+1))
 
 		if [[ ${RETRIES} -eq ${RETRY_COUNTS} ]]; then echo "Error: longhorn test pod start timeout"; exit 1 ; fi

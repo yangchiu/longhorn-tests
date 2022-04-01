@@ -410,6 +410,10 @@ def create_and_check_volume(client, volume_name,
     :param frontend: The frontend to use for the volume.
     :return: The volume instance created.
     """
+
+    print(f'create volume {volume_name} with num_of_replicas = {num_of_replicas}, size = {size}, '
+          f'backing_image = {backing_image}, frontend = {frontend}')
+
     if not backing_image_feature_supported(client):
         backing_image = None
     client.create_volume(name=volume_name, size=size,
@@ -1584,13 +1588,16 @@ def wait_for_volume_faulted(client, name):
 
 def wait_for_volume_status(client, name, key, value):
     wait_for_volume_creation(client, name)
+    print(f'==> wait for volume status {key} = {value}')
     for i in range(RETRY_COUNTS):
         volume = client.by_id_volume(name)
+        print(f'current volume status {key} = {volume[key]}')
         if volume[key] == value:
             break
         time.sleep(RETRY_INTERVAL)
     assert volume[key] == value, f" value={value}\n. \
             volume[key]={volume[key]}\n. volume={volume}"
+    print(f'wait status OK!')
     return volume
 
 
@@ -2471,6 +2478,7 @@ def get_volume_engine(v):
 
 def get_volume_endpoint(v):
     endpoint = check_volume_endpoint(v)
+    print(f'get volume endpoint = {endpoint}')
     return endpoint
 
 
@@ -2491,10 +2499,12 @@ def check_volume_endpoint(v):
 
 def wait_for_backup_completion(client, volume_name, snapshot_name=None,
                                retry_count=RETRY_BACKUP_COUNTS):
+    print(f'==> wait for backup completed')
     completed = False
     for _ in range(retry_count):
         v = client.by_id_volume(volume_name)
         for b in v.backupStatus:
+            print(f'current status = {b}')
             if snapshot_name is not None and b.snapshot != snapshot_name:
                 continue
             if b.state == "Completed":
@@ -2564,6 +2574,7 @@ def wait_for_backup_state(client, volume_name, predicate,
     for i in range(retry_count):
         v = client.by_id_volume(volume_name)
         for b in v.backupStatus:
+            print(f'current backup status = {b}')
             if predicate(b):
                 completed = True
                 break
@@ -4179,6 +4190,7 @@ def wait_for_backup_delete(client, volume_name, backup_name):
         if bv is not None:
             backups = bv.backupList()
             for b in backups:
+                print(f'current status = {b}')
                 if b.name == backup_name:
                     return True
         return False
@@ -4186,6 +4198,7 @@ def wait_for_backup_delete(client, volume_name, backup_name):
     for i in range(RETRY_BACKUP_COUNTS):
         if backup_exists() is False:
             return
+        print(f'wait for backup deleted ... ({i})')
         time.sleep(RETRY_BACKUP_INTERVAL)
 
     assert False, "deleted backup " + backup_name + " for volume " \
@@ -4467,10 +4480,14 @@ def wait_for_cron_job_count(batch_v1_beta_api, number, label="",
 
 def wait_for_pod_annotation(core_api,
                             label_selector, anno_key, anno_val):
+    print(f'==> wait for pod annotation = {anno_key}: {anno_val}')
     matches = False
     for _ in range(RETRY_COUNTS):
         pods = core_api.list_namespaced_pod(
             namespace='longhorn-system', label_selector=label_selector)
+        print(f'current pods annotations:')
+        for pod in pods.items:
+            print(f'{pod.metadata.annotations}')
         if anno_val is None:
             if any(pod.metadata.annotations is None or
                    pod.metadata.annotations.get(anno_key, None) is None

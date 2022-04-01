@@ -227,17 +227,18 @@ run_longhorn_tests(){
 
 	LONGHORN_JUNIT_REPORT_PATH=`yq e '.spec.containers[0].env[] | select(.name == "LONGHORN_JUNIT_REPORT_PATH").value' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"`
 
-	local PYTEST_COMMAND_ARGS='"-s", "--junitxml='${LONGHORN_JUNIT_REPORT_PATH}'"'
-	if [[ -n ${PYTEST_CUSTOM_OPTIONS} ]]; then
-        PYTEST_CUSTOM_OPTIONS=(${PYTEST_CUSTOM_OPTIONS})
 
-        for OPT in "${PYTEST_CUSTOM_OPTIONS[@]}"; do
-            PYTEST_COMMAND_ARGS=${PYTEST_COMMAND_ARGS}', "'${OPT}'"'
-        done
-    fi
+	#local PYTEST_COMMAND_ARGS='"-s", "--junitxml='${LONGHORN_JUNIT_REPORT_PATH}'"'
+	#if [[ -n ${PYTEST_CUSTOM_OPTIONS} ]]; then
+  #      PYTEST_CUSTOM_OPTIONS=(${PYTEST_CUSTOM_OPTIONS})
+#
+#        for OPT in "${PYTEST_CUSTOM_OPTIONS[@]}"; do
+#            PYTEST_COMMAND_ARGS=${PYTEST_COMMAND_ARGS}', "'${OPT}'"'
+#        done
+#    fi
 
 	## generate test pod manifest
-    yq e -i 'select(.spec.containers[0] != null).spec.containers[0].args=['"${PYTEST_COMMAND_ARGS}"']' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
+#    yq e -i 'select(.spec.containers[0] != null).spec.containers[0].args=['"${PYTEST_COMMAND_ARGS}"']' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
     yq e -i 'select(.spec.containers[0] != null).spec.containers[0].image="'${LONGHORN_TESTS_CUSTOM_IMAGE}'"' ${LONGHORN_TESTS_MANIFEST_FILE_PATH}
 
     if [[ $BACKUP_STORE_TYPE = "s3" ]]; then
@@ -273,10 +274,13 @@ run_longhorn_tests(){
 
     # wait longhorn tests to complete
   while [[ -n "`kubectl get pod longhorn-test -o=jsonpath='{.status.containerStatuses[?(@.name=="longhorn-test")].state}' | grep \"running\"`"  ]]; do
-    kubectl logs ${LONGHORN_TEST_POD_NAME} -c longhorn-test -f --since=10s
+    kubectl logs ${LONGHORN_TEST_POD_NAME} -c longhorn-test -f --since=15s
   done
 
   kubectl cp ${LONGHORN_TEST_POD_NAME}:${LONGHORN_JUNIT_REPORT_PATH} "${TF_VAR_tf_workspace}/longhorn-test-junit-report.xml" -c longhorn-test-report
+
+  # copy behave related reports
+  kubectl cp ${LONGHORN_TEST_POD_NAME}:/tmp/test-report/ ${TF_VAR_tf_workspace} -c longhorn-test-report
 }
 
 

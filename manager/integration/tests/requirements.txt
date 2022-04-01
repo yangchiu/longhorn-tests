@@ -5,6 +5,8 @@ kubernetes==11.0.0
 pytest==5.3.1
 pytest-repeat==0.9.1
 requests==2.25.1
-six==1.12.0
+six==1.15.0
 minio==5.0.10
 boto3==1.17.91
+behave-no-capture==1.2.7.dev2
+behave-html-formatter==0.9.8

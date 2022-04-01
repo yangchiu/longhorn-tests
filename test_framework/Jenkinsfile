@@ -69,15 +69,22 @@ node {
 			}
 
             stage ('report generation') {
-                sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${TF_VAR_tf_workspace}/longhorn-test-junit-report.xml ."
 
-                if(params.LONGHORN_UPGRADE_TEST) {
-                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${TF_VAR_tf_workspace}/longhorn-test-upgrade-junit-report.xml ."
-                    summary = junit 'longhorn-test-upgrade-junit-report.xml, longhorn-test-junit-report.xml'
-                }
-                else {
-                    summary = junit 'longhorn-test-junit-report.xml'
-                }
+                sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${TF_VAR_tf_workspace}/. ."
+                sh "ls"
+                sh "ls test_framework"
+                sh "pwd"
+                summary = junit '*.xml'
+
+                publishHTML(target: [
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: "./",
+                    reportFiles: "report.html",
+                    reportName: 'Behave Report',
+                    reportTitles: 'Behave Report'
+                ])
             }
 
         } catch(e) {

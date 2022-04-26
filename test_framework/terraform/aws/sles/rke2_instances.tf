@@ -1,6 +1,6 @@
 # Create cluster secret for rke2
 resource "random_password" "rke2_cluster_secret" {
-  length = var.k8s_distro_name == "rke2" ? 64 : 0
+  length = var.k8s_distro_name == "rke2" ? 64 : 1
   special = false
 }
 
@@ -42,7 +42,7 @@ resource "aws_instance" "lh_aws_instance_controlplane_rke2" {
 resource "aws_instance" "lh_aws_instance_worker_rke2" {
   depends_on = [
     aws_internet_gateway.lh_aws_igw,
-    aws_subnet.lh_aws_private_subnet,
+    aws_subnet.lh_aws_public_subnet,
     aws_instance.lh_aws_instance_controlplane_rke2
   ]
 
@@ -53,7 +53,7 @@ resource "aws_instance" "lh_aws_instance_worker_rke2" {
   ami           = data.aws_ami.aws_ami_sles.id
   instance_type = var.lh_aws_instance_type_worker
 
-  subnet_id = aws_subnet.lh_aws_private_subnet.id
+  subnet_id = aws_subnet.lh_aws_public_subnet.id
   vpc_security_group_ids = [
     aws_security_group.lh_aws_secgrp_worker.id
   ]

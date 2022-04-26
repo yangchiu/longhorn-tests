@@ -78,6 +78,14 @@ resource "aws_security_group" "lh_aws_secgrp_controlplane" {
   }
 
   ingress {
+    description = "Allow node port"
+    from_port   = 30007
+    to_port     = 30007
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     description = "Allow UDP connection for longhorn-webhooks"
     from_port   = 0
     to_port     = 65535
@@ -155,32 +163,6 @@ resource "aws_subnet" "lh_aws_private_subnet" {
   }
 }
 
-# Create EIP for NATGW
-resource "aws_eip" "lh_aws_eip_nat_gw" {
-  vpc      = true
-
-  tags = {
-    Name = "lh_eip_nat_gw-${random_string.random_suffix.id}"
-  }
-}
-
-# Create nat gateway
-resource "aws_nat_gateway" "lh_aws_nat_gw" {
-  depends_on = [
-    aws_internet_gateway.lh_aws_igw,
-    aws_eip.lh_aws_eip_nat_gw,
-    aws_subnet.lh_aws_public_subnet,
-    aws_subnet.lh_aws_private_subnet
-  ]
-
-  allocation_id = aws_eip.lh_aws_eip_nat_gw.id
-  subnet_id     = aws_subnet.lh_aws_public_subnet.id
-
-  tags = {
-    Name = "lh_eip_nat_gw-${random_string.random_suffix.id}"
-  }
-}
-
 
 # Create route table for public subnets
 resource "aws_route_table" "lh_aws_public_rt" {
@@ -200,23 +182,6 @@ resource "aws_route_table" "lh_aws_public_rt" {
   }
 }
 
-# Create route table for private subnets
-resource "aws_route_table" "lh_aws_private_rt" {
-  depends_on = [
-    aws_nat_gateway.lh_aws_nat_gw
-  ]
-
-  vpc_id = aws_vpc.lh_aws_vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.lh_aws_nat_gw.id
-  }
-
-  tags = {
-    Name = "lh_aws_private_rt-${random_string.random_suffix.id}"
-  }
-}
 
 # Assciate public subnet to public route table
 resource "aws_route_table_association" "lh_aws_public_subnet_rt_association" {
@@ -229,16 +194,6 @@ resource "aws_route_table_association" "lh_aws_public_subnet_rt_association" {
   route_table_id = aws_route_table.lh_aws_public_rt.id
 }
 
-# Assciate private subnet to private route table
-resource "aws_route_table_association" "lh_aws_private_subnet_rt_association" {
-  depends_on = [
-    aws_subnet.lh_aws_private_subnet,
-    aws_route_table.lh_aws_private_rt
-  ]
-
-  subnet_id      = aws_subnet.lh_aws_private_subnet.id
-  route_table_id = aws_route_table.lh_aws_private_rt.id
-}
 
 # Create AWS key pair
 resource "aws_key_pair" "lh_aws_pair_key" {

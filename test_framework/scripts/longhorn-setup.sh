@@ -25,6 +25,8 @@ set_kubeconfig_envvar(){
 			export KUBECONFIG="${BASEDIR}/terraform/aws/${DISTRO}/rke2.yaml"
 		else
 			export KUBECONFIG="${BASEDIR}/terraform/aws/${DISTRO}/k3s.yaml"
+			echo "cat k3s.yaml"
+			cat "${BASEDIR}/terraform/aws/${DISTRO}/k3s.yaml"
 		fi
 	elif [[ ${ARCH} == "arm64"  ]]; then
 		export KUBECONFIG="${BASEDIR}/terraform/aws/${DISTRO}/k3s.yaml"
@@ -71,6 +73,7 @@ generate_longhorn_yaml_manifest() {
 
     CUSTOM_LONGHORN_MANAGER_IMAGE=${CUSTOM_LONGHORN_MANAGER_IMAGE:-"longhornio/longhorn-manager:master-head"}
     CUSTOM_LONGHORN_ENGINE_IMAGE=${CUSTOM_LONGHORN_ENGINE_IMAGE:-"longhornio/longhorn-engine:master-head"}
+    CUSTOM_LONGHORN_UI_IMAGE="longhornio/longhorn-ui:v1.1.x-head"
 
     CUSTOM_LONGHORN_INSTANCE_MANAGER_IMAGE=${CUSTOM_LONGHORN_INSTANCE_MANAGER_IMAGE:-""}
     CUSTOM_LONGHORN_SHARE_MANAGER_IMAGE=${CUSTOM_LONGHORN_SHARE_MANAGER_IMAGE:-""}
@@ -90,6 +93,7 @@ generate_longhorn_yaml_manifest() {
 	# get longhorn default images from yaml manifest
     LONGHORN_MANAGER_IMAGE=`grep -io "longhornio\/longhorn-manager:.*$" "${MANIFEST_BASEDIR}/longhorn.yaml"| head -1`
     LONGHORN_ENGINE_IMAGE=`grep -io "longhornio\/longhorn-engine:.*$" "${MANIFEST_BASEDIR}/longhorn.yaml"| head -1`
+    LONGHORN_UI_IMAGE=`grep -io "longhornio\/longhorn-ui:.*$" "longhorn.yaml"| head -1`
     LONGHORN_INSTANCE_MANAGER_IMAGE=`grep -io "longhornio\/longhorn-instance-manager:.*$" "${MANIFEST_BASEDIR}/longhorn.yaml"| head -1`
     LONGHORN_SHARE_MANAGER_IMAGE=`grep -io "longhornio\/longhorn-share-manager:.*$" "${MANIFEST_BASEDIR}/longhorn.yaml"| head -1`
     LONGHORN_BACKING_IMAGE_MANAGER_IMAGE=`grep -io "longhornio\/backing-image-manager:.*$" "${MANIFEST_BASEDIR}/longhorn.yaml"| head -1`
@@ -97,6 +101,7 @@ generate_longhorn_yaml_manifest() {
 	# replace longhorn images with custom images
     sed -i 's#'${LONGHORN_MANAGER_IMAGE}'#'${CUSTOM_LONGHORN_MANAGER_IMAGE}'#' "${MANIFEST_BASEDIR}/longhorn.yaml"
     sed -i 's#'${LONGHORN_ENGINE_IMAGE}'#'${CUSTOM_LONGHORN_ENGINE_IMAGE}'#' "${MANIFEST_BASEDIR}/longhorn.yaml"
+    sed -i 's#'${LONGHORN_UI_IMAGE}'#'${CUSTOM_LONGHORN_UI_IMAGE}'#' "longhorn.yaml"
 
 	# replace images if custom image is specified.
 	if [[ ! -z ${CUSTOM_LONGHORN_INSTANCE_MANAGER_IMAGE} ]]; then
@@ -298,7 +303,8 @@ main(){
 		run_longhorn_tests ${WORKSPACE}
 	else
 		install_longhorn_master "${TF_VAR_tf_workspace}/longhorn.yaml"
-		run_longhorn_tests ${WORKSPACE}
+		#run_longhorn_tests ${WORKSPACE}
+		sleep 180m
 	fi
 }
 

@@ -46,7 +46,7 @@ variable "lh_aws_instance_count_controlplane" {
 
 variable "lh_aws_instance_count_worker" {
   type        = number
-  default     = 3
+  default     = 1
 }
 
 variable "lh_aws_instance_name_controlplane" {

@@ -1,6 +1,6 @@
 # Create cluster secret for k3s
 resource "random_password" "k3s_cluster_secret" {
-  length = var.k8s_distro_name == "k3s" ? 64 : 0
+  length = var.k8s_distro_name == "k3s" ? 64 : 1
   special = false
 }
 
@@ -27,6 +27,8 @@ resource "aws_instance" "lh_aws_instance_controlplane_k3s" {
     volume_size = var.lh_aws_instance_root_block_device_size_controlplane
   }
 
+  associate_public_ip_address = true
+
   key_name = aws_key_pair.lh_aws_pair_key.key_name
 
   user_data = data.template_file.provision_k3s_server.rendered
@@ -42,7 +44,7 @@ resource "aws_instance" "lh_aws_instance_controlplane_k3s" {
 resource "aws_instance" "lh_aws_instance_worker_k3s" {
   depends_on = [
     aws_internet_gateway.lh_aws_igw,
-    aws_subnet.lh_aws_private_subnet,
+    aws_subnet.lh_aws_public_subnet,
     aws_instance.lh_aws_instance_controlplane_k3s
   ]
 
@@ -53,10 +55,12 @@ resource "aws_instance" "lh_aws_instance_worker_k3s" {
   ami           = data.aws_ami.aws_ami_sles.id
   instance_type = var.lh_aws_instance_type_worker
 
-  subnet_id = aws_subnet.lh_aws_private_subnet.id
+  subnet_id = aws_subnet.lh_aws_public_subnet.id
   vpc_security_group_ids = [
     aws_security_group.lh_aws_secgrp_worker.id
   ]
+
+  associate_public_ip_address = true
 
   root_block_device {
     delete_on_termination = true

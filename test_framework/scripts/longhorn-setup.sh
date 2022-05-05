@@ -2,6 +2,12 @@
 
 set -x
 
+TF_VAR_arch="amd64"
+TF_VAR_k8s_distro_name="k3s"
+TF_VAR_tf_workspace="/home/yang/Code/longhorn-tests-work/test_framework"
+PYTEST_CUSTOM_OPTIONS=""
+
+
 # create and clean tmpdir
 TMPDIR="/tmp/longhorn"
 mkdir -p ${TMPDIR}
@@ -62,6 +68,13 @@ wait_longhorn_status_running(){
 }
 
 
+LONGHORN_MANAGER_REPO_URI="https://github.com/longhorn/longhorn-manager.git"
+LONGHORN_MANAGER_BRANCH="v1.2.x"
+CUSTOM_LONGHORN_MANAGER_IMAGE="longhornio/longhorn-manager:v1.2.x-head"
+CUSTOM_LONGHORN_ENGINE_IMAGE="longhornio/longhorn-engine:v1.2.x-head"
+CUSTOM_LONGHORN_UI_IMAGE="longhornio/longhorn-ui:v1.2.x-head"
+
+
 generate_longhorn_yaml_manifest() {
 	MANIFEST_BASEDIR="${1}"
 
@@ -71,6 +84,7 @@ generate_longhorn_yaml_manifest() {
 
     CUSTOM_LONGHORN_MANAGER_IMAGE=${CUSTOM_LONGHORN_MANAGER_IMAGE:-"longhornio/longhorn-manager:master-head"}
     CUSTOM_LONGHORN_ENGINE_IMAGE=${CUSTOM_LONGHORN_ENGINE_IMAGE:-"longhornio/longhorn-engine:master-head"}
+    CUSTOM_LONGHORN_UI_IMAGE=${CUSTOM_LONGHORN_UI_IMAGE:-"longhornio/longhorn-ui:master-head"}
 
     CUSTOM_LONGHORN_INSTANCE_MANAGER_IMAGE=${CUSTOM_LONGHORN_INSTANCE_MANAGER_IMAGE:-""}
     CUSTOM_LONGHORN_SHARE_MANAGER_IMAGE=${CUSTOM_LONGHORN_SHARE_MANAGER_IMAGE:-""}
@@ -97,6 +111,7 @@ generate_longhorn_yaml_manifest() {
 	# replace longhorn images with custom images
     sed -i 's#'${LONGHORN_MANAGER_IMAGE}'#'${CUSTOM_LONGHORN_MANAGER_IMAGE}'#' "${MANIFEST_BASEDIR}/longhorn.yaml"
     sed -i 's#'${LONGHORN_ENGINE_IMAGE}'#'${CUSTOM_LONGHORN_ENGINE_IMAGE}'#' "${MANIFEST_BASEDIR}/longhorn.yaml"
+    sed -i 's#'${LONGHORN_UI_IMAGE}'#'${CUSTOM_LONGHORN_UI_IMAGE}'#' "longhorn.yaml"
 
 	# replace images if custom image is specified.
 	if [[ ! -z ${CUSTOM_LONGHORN_INSTANCE_MANAGER_IMAGE} ]]; then
@@ -151,9 +166,9 @@ install_backupstores(){
 
 
 create_aws_secret(){
-	AWS_ACCESS_KEY_ID_BASE64=`echo -n "${TF_VAR_lh_aws_access_key}" | base64`
-	AWS_SECRET_ACCESS_KEY_BASE64=`echo -n "${TF_VAR_lh_aws_secret_key}" | base64`
-	AWS_DEFAULT_REGION_BASE64=`echo -n "${TF_VAR_aws_region}" | base64`
+	AWS_ACCESS_KEY_ID_BASE64=`echo -n "${TF_VAR_aws_access_key}" | base64`
+	AWS_SECRET_ACCESS_KEY_BASE64=`echo -n "${TF_VAR_aws_secret_key}" | base64`
+	AWS_DEFAULT_REGION_BASE64=`echo -n "us-east-1" | base64`
 
 	yq e -i '.data.AWS_ACCESS_KEY_ID |= "'${AWS_ACCESS_KEY_ID_BASE64}'"' "${TF_VAR_tf_workspace}/templates/aws_cred_secrets.yml"
 	yq e -i '.data.AWS_SECRET_ACCESS_KEY |= "'${AWS_SECRET_ACCESS_KEY_BASE64}'"' "${TF_VAR_tf_workspace}/templates/aws_cred_secrets.yml"
@@ -281,7 +296,7 @@ run_longhorn_tests(){
 
 
 main(){
-	set_kubeconfig_envvar ${TF_VAR_arch} ${TF_VAR_tf_workspace}
+	#set_kubeconfig_envvar ${TF_VAR_arch} ${TF_VAR_tf_workspace}
 	create_longhorn_namespace
 	install_backupstores
 	# set debugging mode off to avoid leaking aws secrets to the logs.

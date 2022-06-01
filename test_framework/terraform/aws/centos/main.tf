@@ -13,6 +13,10 @@ provider "aws" {
   secret_key = var.lh_aws_secret_key
 }
 
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 # Create a random string suffix for instance names
 resource "random_string" "random_suffix" {
   length           = 8
@@ -142,7 +146,7 @@ resource "aws_security_group" "lh_aws_secgrp_worker" {
 # Create Public subnet
 resource "aws_subnet" "lh_aws_public_subnet" {
   vpc_id     = aws_vpc.lh_aws_vpc.id
-  availability_zone = var.aws_availability_zone
+  availability_zone = data.aws_availability_zones.available.names[0]
   cidr_block = "10.0.1.0/24"
 
   tags = {
@@ -153,7 +157,7 @@ resource "aws_subnet" "lh_aws_public_subnet" {
 # Create private subnet
 resource "aws_subnet" "lh_aws_private_subnet" {
   vpc_id     = aws_vpc.lh_aws_vpc.id
-  availability_zone = var.aws_availability_zone
+  availability_zone = data.aws_availability_zones.available.names[1]
   cidr_block = "10.0.2.0/24"
 
   tags = {

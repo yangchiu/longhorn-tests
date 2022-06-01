@@ -1,0 +1,113 @@
+import os
+import sys
+
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.wait import WebDriverWait
+
+wait_timeout = 10
+click_retry_timeout = 20
+
+
+def wait_for(target):
+    try:
+        WebDriverWait(driver, wait_timeout).until(
+            expected_conditions.presence_of_element_located((By.XPATH, elements[target]))
+        )
+        return True
+    except Exception as e:
+        print(f'wait for {target} error: {e}')
+        return False
+
+
+def click(target):
+    driver.find_element_by_xpath(elements[target]).click()
+
+
+def click_and_wait(target, expect):
+    success = False
+    retry = 0
+    max_retry = 10
+    while success is not True and retry < max_retry:
+        try:
+            _target = driver.find_element_by_xpath(elements[target])
+            _target.click()
+            WebDriverWait(driver, click_retry_timeout).until(
+                expected_conditions.presence_of_element_located((By.XPATH, elements[expect]))
+            )
+            success = True
+        except ElementClickInterceptedException as e:
+            raise e
+        except Exception as e:
+            print(f'[retry {retry}] try to click {target} and wait for {expect} failed ... {repr(e)} {e}')
+        retry += 1
+
+
+def send_keys(target, keys):
+    _target = driver.find_element_by_xpath(elements[target])
+    _target.send_keys(keys)
+
+
+def get_element(element):
+    content = driver.find_element_by_xpath(elements[element]).text
+    return content
+
+
+elements = {
+    'username_input': '//*[@id="username"]',
+    'password_input': '//*[@type="password"]',
+    'login': '//button[@id="submit"]',
+    'local_cluster': '//*[contains(@href, "/local")]',
+    'create_api_key': '//button[contains(text(), "Create API Key")]',
+    'create_confirm': '//button//*[contains(text() ,"Create")]',
+    'access_key': '//*[contains(@class, "with-copy")][1]/span',
+    'secret_key': '//*[contains(@class, "with-copy")][2]/span',
+    'create_done': '//button//*[contains(text() ,"Done")]'
+}
+
+if __name__ == '__main__':
+
+    url = 'https://' + sys.argv[1]
+    login_url = url + '/dashboard/auth/login'
+    account_url = url + '/dashboard/account'
+
+    options = webdriver.ChromeOptions()
+    prefs = {
+        'profile.default_content_setting_values.notifications': 2
+    }
+    options.add_experimental_option('prefs', prefs)
+    options.add_argument('--headless')
+    options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--no-sandbox')
+    options.add_argument('window-size=1920,1200')
+
+    driver = webdriver.Chrome(executable_path='/usr/bin/chromedriver', options=options)
+
+    try:
+        print('1')
+        print(login_url)
+        driver.get(login_url)
+        wait_for('username_input')
+        send_keys('username_input', 'admin')
+        print('2')
+        print(sys.argv[2])
+        send_keys('password_input', sys.argv[2])
+        click_and_wait('login', 'local_cluster')
+        driver.get(account_url)
+        wait_for('create_api_key')
+        click_and_wait('create_api_key', 'create_confirm')
+        click_and_wait('create_confirm', 'access_key')
+        access_key = get_element('access_key')
+        secret_key = get_element('secret_key')
+        click('create_done')
+        with open('access_key', 'w') as f:
+            f.write(str(access_key))
+        with open('secret_key', 'w') as f:
+            f.write(str(secret_key))
+    except Exception as e:
+        print(f'parsing error: {e}')
+    finally:
+        driver.quit()
+

@@ -10,12 +10,7 @@ variable "lh_aws_secret_key" {
 
 variable "aws_region" {
   type        = string
-  default     = "us-east-2"
-}
-
-variable "aws_availability_zone" {
-  type        = string
-  default     = "us-east-2c"
+  default     = "us-east-1"
 }
 
 variable "lh_aws_vpc_name" {

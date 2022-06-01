@@ -6,8 +6,6 @@ resource "aws_instance" "lh_aws_instance_controlplane_rke" {
 
   count = var.k8s_distro_name == "rke" ? var.lh_aws_instance_count_controlplane : 0
 
-  availability_zone = var.aws_availability_zone
-
   ami           = data.aws_ami.aws_ami_ubuntu.id
   instance_type = var.lh_aws_instance_type_controlplane
 
@@ -30,6 +28,18 @@ resource "aws_instance" "lh_aws_instance_controlplane_rke" {
     DoNotDelete = "true"
     Owner = "longhorn-infra"
   }
+}
+
+resource "aws_lb_target_group_attachment" "lh_aws_lb_tg_443_attachment_rke" {
+  count            = length(aws_instance.lh_aws_instance_controlplane_rke)
+  target_group_arn = aws_lb_target_group.lh_aws_lb_tg_443.arn
+  target_id        = aws_instance.lh_aws_instance_controlplane_rke[count.index].id
+}
+
+resource "aws_lb_target_group_attachment" "lh_aws_lb_tg_80_attachment_rke" {
+  count            = length(aws_instance.lh_aws_instance_controlplane_rke)
+  target_group_arn = aws_lb_target_group.lh_aws_lb_tg_80.arn
+  target_id        = aws_instance.lh_aws_instance_controlplane_rke[count.index].id
 }
 
 # wait for docker to start on controlplane instances for rke
@@ -65,8 +75,6 @@ resource "aws_instance" "lh_aws_instance_worker_rke" {
   ]
 
   count = var.k8s_distro_name == "rke" ? var.lh_aws_instance_count_worker : 0
-  
-  availability_zone = var.aws_availability_zone
   
   ami           = data.aws_ami.aws_ami_ubuntu.id
   instance_type = var.lh_aws_instance_type_worker

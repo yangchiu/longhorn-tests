@@ -6,8 +6,6 @@ resource "aws_instance" "lh_aws_instance_controlplane_rke2" {
 
   count = var.k8s_distro_name == "rke2" ? var.lh_aws_instance_count_controlplane : 0
 
-  availability_zone = var.aws_availability_zone
-
   ami           = data.aws_ami.aws_ami_ubuntu.id
   instance_type = var.lh_aws_instance_type_controlplane
 
@@ -32,6 +30,18 @@ resource "aws_instance" "lh_aws_instance_controlplane_rke2" {
   }
 }
 
+resource "aws_lb_target_group_attachment" "lh_aws_lb_tg_443_attachment_rke2" {
+  count            = length(aws_instance.lh_aws_instance_controlplane_rke2)
+  target_group_arn = aws_lb_target_group.lh_aws_lb_tg_443.arn
+  target_id        = aws_instance.lh_aws_instance_controlplane_rke2[count.index].id
+}
+
+resource "aws_lb_target_group_attachment" "lh_aws_lb_tg_80_attachment_rke2" {
+  count            = length(aws_instance.lh_aws_instance_controlplane_rke2)
+  target_group_arn = aws_lb_target_group.lh_aws_lb_tg_80.arn
+  target_id        = aws_instance.lh_aws_instance_controlplane_rke2[count.index].id
+}
+
 # Create worker instances for rke2
 resource "aws_instance" "lh_aws_instance_worker_rke2" {
   depends_on = [
@@ -41,9 +51,7 @@ resource "aws_instance" "lh_aws_instance_worker_rke2" {
   ]
 
   count = var.k8s_distro_name == "rke2" ? var.lh_aws_instance_count_worker : 0
-  
-  availability_zone = var.aws_availability_zone
-  
+
   ami           = data.aws_ami.aws_ami_ubuntu.id
   instance_type = var.lh_aws_instance_type_worker
     

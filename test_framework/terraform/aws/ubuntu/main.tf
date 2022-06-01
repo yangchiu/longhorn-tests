@@ -13,6 +13,10 @@ provider "aws" {
   secret_key = var.lh_aws_secret_key
 }
 
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 # Create a random string suffix for instance names
 resource "random_string" "random_suffix" {
   length           = 8
@@ -55,6 +59,22 @@ resource "aws_security_group" "lh_aws_secgrp_controlplane" {
     description = "Allow SSH"
     from_port   = 22
     to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow HTTPS"
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -128,6 +148,22 @@ resource "aws_security_group" "lh_aws_secgrp_worker" {
     cidr_blocks = [aws_vpc.lh_aws_vpc.cidr_block]
   }
 
+  ingress {
+    description = "Allow HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -144,7 +180,7 @@ resource "aws_security_group" "lh_aws_secgrp_worker" {
 # Create Public subnet
 resource "aws_subnet" "lh_aws_public_subnet" {
   vpc_id     = aws_vpc.lh_aws_vpc.id
-  availability_zone = var.aws_availability_zone
+  availability_zone = data.aws_availability_zones.available.names[0]
   cidr_block = "10.0.1.0/24"
 
   tags = {
@@ -155,7 +191,7 @@ resource "aws_subnet" "lh_aws_public_subnet" {
 # Create private subnet
 resource "aws_subnet" "lh_aws_private_subnet" {
   vpc_id     = aws_vpc.lh_aws_vpc.id
-  availability_zone = var.aws_availability_zone
+  availability_zone = data.aws_availability_zones.available.names[1]
   cidr_block = "10.0.2.0/24"
 
   tags = {
@@ -188,7 +224,6 @@ resource "aws_nat_gateway" "lh_aws_nat_gw" {
     Name = "lh_eip_nat_gw-${random_string.random_suffix.id}"
   }
 }
-
 
 # Create route table for public subnets
 resource "aws_route_table" "lh_aws_public_rt" {
@@ -257,4 +292,72 @@ resource "aws_key_pair" "lh_aws_pair_key" {
 resource "aws_eip" "lh_aws_eip_controlplane" {
   count    = var.lh_aws_instance_count_controlplane
   vpc      = true
+}
+
+resource "aws_eip" "lh_aws_eip_worker" {
+  count    = var.lh_aws_instance_count_worker
+  vpc      = true
+}
+
+# Create load balancer for rancher
+resource "aws_lb_target_group" "lh_aws_lb_tg_443" {
+  name     = "lh-aws-lb-tg-443-${random_string.random_suffix.id}"
+  port     = 443
+  protocol = "TCP"
+  vpc_id   = aws_vpc.lh_aws_vpc.id
+  health_check {
+    protocol = "TCP"
+    port = "80"
+    healthy_threshold = 3
+    unhealthy_threshold = 3
+    interval = 10
+  }
+}
+
+resource "aws_lb_target_group" "lh_aws_lb_tg_80" {
+  name     = "lh-aws-lb-tg-80-${random_string.random_suffix.id}"
+  port     = 80
+  protocol = "TCP"
+  vpc_id   = aws_vpc.lh_aws_vpc.id
+  health_check {
+    protocol = "TCP"
+    port = "traffic-port"
+    healthy_threshold = 3
+    unhealthy_threshold = 3
+    interval = 10
+  }
+}
+
+resource "aws_lb" "lh_aws_lb" {
+  name               = "lh-aws-lb-${random_string.random_suffix.id}"
+  internal           = false
+  load_balancer_type = "network"
+  subnets            = [
+    aws_subnet.lh_aws_public_subnet.id,
+    aws_subnet.lh_aws_private_subnet.id
+  ]
+}
+
+resource "aws_lb_listener" "lh_aws_lb_listener_443" {
+  load_balancer_arn = aws_lb.lh_aws_lb.arn
+  port              = "443"
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.lh_aws_lb_tg_443.arn
+  }
+
+}
+
+resource "aws_lb_listener" "lh_aws_lb_listener_80" {
+  load_balancer_arn = aws_lb.lh_aws_lb.arn
+  port              = "80"
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.lh_aws_lb_tg_80.arn
+  }
+
 }

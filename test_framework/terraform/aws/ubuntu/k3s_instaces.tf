@@ -6,8 +6,6 @@ resource "aws_instance" "lh_aws_instance_controlplane_k3s" {
 
   count = var.k8s_distro_name == "k3s" ? var.lh_aws_instance_count_controlplane : 0
 
-  availability_zone = var.aws_availability_zone
-
   ami           = data.aws_ami.aws_ami_ubuntu.id
   instance_type = var.lh_aws_instance_type_controlplane
 
@@ -32,22 +30,32 @@ resource "aws_instance" "lh_aws_instance_controlplane_k3s" {
   }
 }
 
+resource "aws_lb_target_group_attachment" "lh_aws_lb_tg_443_attachment_controlplane_k3s" {
+  count            = length(aws_instance.lh_aws_instance_controlplane_k3s)
+  target_group_arn = aws_lb_target_group.lh_aws_lb_tg_443.arn
+  target_id        = aws_instance.lh_aws_instance_controlplane_k3s[count.index].id
+}
+
+resource "aws_lb_target_group_attachment" "lh_aws_lb_tg_80_attachment_controlplane_k3s" {
+  count            = length(aws_instance.lh_aws_instance_controlplane_k3s)
+  target_group_arn = aws_lb_target_group.lh_aws_lb_tg_80.arn
+  target_id        = aws_instance.lh_aws_instance_controlplane_k3s[count.index].id
+}
+
 # Create worker instances for k3s
 resource "aws_instance" "lh_aws_instance_worker_k3s" {
   depends_on = [
     aws_internet_gateway.lh_aws_igw,
-    aws_subnet.lh_aws_private_subnet,
+    aws_subnet.lh_aws_public_subnet,
     aws_instance.lh_aws_instance_controlplane_k3s
   ]
 
   count = var.k8s_distro_name == "k3s" ? var.lh_aws_instance_count_worker : 0
-  
-  availability_zone = var.aws_availability_zone
-  
+
   ami           = data.aws_ami.aws_ami_ubuntu.id
   instance_type = var.lh_aws_instance_type_worker
     
-  subnet_id = aws_subnet.lh_aws_private_subnet.id
+  subnet_id = aws_subnet.lh_aws_public_subnet.id
   vpc_security_group_ids = [
     aws_security_group.lh_aws_secgrp_worker.id
   ]
@@ -66,7 +74,19 @@ resource "aws_instance" "lh_aws_instance_worker_k3s" {
     DoNotDelete = "true"
     Owner = "longhorn-infra"
   }
-} 
+}
+
+resource "aws_lb_target_group_attachment" "lh_aws_lb_tg_443_attachment_k3s" {
+  count            = length(aws_instance.lh_aws_instance_worker_k3s)
+  target_group_arn = aws_lb_target_group.lh_aws_lb_tg_443.arn
+  target_id        = aws_instance.lh_aws_instance_worker_k3s[count.index].id
+}
+
+resource "aws_lb_target_group_attachment" "lh_aws_lb_tg_80_attachment_k3s" {
+  count            = length(aws_instance.lh_aws_instance_worker_k3s)
+  target_group_arn = aws_lb_target_group.lh_aws_lb_tg_80.arn
+  target_id        = aws_instance.lh_aws_instance_worker_k3s[count.index].id
+}
 
 # Associate every EIP with controlplane instance
 resource "aws_eip_association" "lh_aws_eip_assoc_k3s" {
@@ -79,6 +99,19 @@ resource "aws_eip_association" "lh_aws_eip_assoc_k3s" {
 
   instance_id   = element(aws_instance.lh_aws_instance_controlplane_k3s, count.index).id
   allocation_id = element(aws_eip.lh_aws_eip_controlplane, count.index).id
+}
+
+# Associate every EIP with worker instance
+resource "aws_eip_association" "lh_aws_eip_assoc_k3s_worker" {
+  depends_on = [
+    aws_instance.lh_aws_instance_worker_k3s,
+    aws_eip.lh_aws_eip_worker
+  ]
+
+  count = var.k8s_distro_name == "k3s" ? var.lh_aws_instance_count_worker : 0
+
+  instance_id   = element(aws_instance.lh_aws_instance_worker_k3s, count.index).id
+  allocation_id = element(aws_eip.lh_aws_eip_worker, count.index).id
 }
 
 # Download KUBECONFIG file for k3s

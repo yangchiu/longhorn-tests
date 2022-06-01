@@ -38,3 +38,11 @@ output "rke_config" {
     }
   }) : null
 }
+
+output "load_balancer_url" {
+  depends_on = [
+    aws_lb.lh_aws_lb
+  ]
+
+  value = aws_lb.lh_aws_lb.dns_name
+}

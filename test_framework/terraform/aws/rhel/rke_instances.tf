@@ -6,8 +6,6 @@ resource "aws_instance" "lh_aws_instance_controlplane_rke" {
 
   count = var.k8s_distro_name == "rke" ? var.lh_aws_instance_count_controlplane : 0
 
-  availability_zone = var.aws_availability_zone
-
   ami           = data.aws_ami.aws_ami_rhel.id
   instance_type = var.lh_aws_instance_type_controlplane
 
@@ -65,8 +63,6 @@ resource "aws_instance" "lh_aws_instance_worker_rke" {
   ]
 
   count = var.k8s_distro_name == "rke" ? var.lh_aws_instance_count_worker : 0
-
-  availability_zone = var.aws_availability_zone
 
   ami           = data.aws_ami.aws_ami_rhel.id
   instance_type = var.lh_aws_instance_type_worker

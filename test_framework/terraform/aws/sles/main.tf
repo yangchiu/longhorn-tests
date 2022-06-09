@@ -52,6 +52,14 @@ resource "aws_security_group" "lh_aws_secgrp_controlplane" {
   vpc_id      = aws_vpc.lh_aws_vpc.id
 
   ingress {
+    description = "Allow All"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     description = "Allow SSH"
     from_port   = 22
     to_port     = 22

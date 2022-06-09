@@ -21,13 +21,25 @@ set_kubeconfig_envvar(){
     if [[ ${ARCH} == "amd64" ]] ; then
 		if [[ ${TF_VAR_k8s_distro_name} == [rR][kK][eE] ]]; then
 			export KUBECONFIG="${BASEDIR}/kube_config_rke.yml"
+			echo "--- ---"
+			cat "${BASEDIR}/kube_config_rke.yml"
+			echo "--- ---"
 		elif [[ ${TF_VAR_k8s_distro_name} == [rR][kK][eE]2 ]]; then
 			export KUBECONFIG="${BASEDIR}/terraform/aws/${DISTRO}/rke2.yaml"
+			echo "--- ---"
+			cat "${BASEDIR}/terraform/aws/${DISTRO}/rke2.yaml"
+			echo "--- ---"
 		else
 			export KUBECONFIG="${BASEDIR}/terraform/aws/${DISTRO}/k3s.yaml"
+			echo "--- ---"
+			cat "${BASEDIR}/terraform/aws/${DISTRO}/k3s.yaml"
+			echo "--- ---"
 		fi
 	elif [[ ${ARCH} == "arm64"  ]]; then
 		export KUBECONFIG="${BASEDIR}/terraform/aws/${DISTRO}/k3s.yaml"
+		echo "--- ---"
+		"${BASEDIR}/terraform/aws/${DISTRO}/k3s.yaml"
+		echo "--- ---"
 	fi
 }
 
@@ -282,24 +294,6 @@ run_longhorn_tests(){
 
 main(){
 	set_kubeconfig_envvar ${TF_VAR_arch} ${TF_VAR_tf_workspace}
-	create_longhorn_namespace
-	install_backupstores
-	# set debugging mode off to avoid leaking aws secrets to the logs.
-	# DON'T REMOVE!
-	set +x
-	create_aws_secret
-	set -x
-	install_csi_snapshotter_crds
-	generate_longhorn_yaml_manifest "${TF_VAR_tf_workspace}"
-
-	if [[ "${LONGHORN_UPGRADE_TEST}" == true || "${LONGHORN_UPGRADE_TEST}" == True ]]; then
-		install_longhorn_stable
-		run_longhorn_upgrade_test ${WORKSPACE}
-		run_longhorn_tests ${WORKSPACE}
-	else
-		install_longhorn_master "${TF_VAR_tf_workspace}/longhorn.yaml"
-		run_longhorn_tests ${WORKSPACE}
-	fi
 }
 
 main

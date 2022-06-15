@@ -38,3 +38,7 @@ output "rke_config" {
     }
   }) : null
 }
+
+output "os_distro_version" {
+  value = var.os_distro_version
+}

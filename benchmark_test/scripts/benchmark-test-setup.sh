@@ -199,16 +199,16 @@ main(){
   generate_longhorn_yaml_manifest "${TF_VAR_tf_workspace}"
   install_longhorn "${TF_VAR_tf_workspace}/longhorn.yaml"
 
-  run_fio_local_path_test
+  #run_fio_local_path_test
 
   adjust_replica_count 1
   run_fio_longhorn_test 1
 
-  adjust_replica_count 2
-  run_fio_longhorn_test 2
+  #adjust_replica_count 2
+  #run_fio_longhorn_test 2
 
-  adjust_replica_count 3
-  run_fio_longhorn_test 3
+  #adjust_replica_count 3
+  #run_fio_longhorn_test 3
 
 }
 

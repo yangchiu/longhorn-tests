@@ -5,7 +5,7 @@ def BUILD_TRIGGER_BY = "\n${currentBuild.getBuildCauses()[0].shortDescription}"
 // define optional parameters
 def SELINUX_MODE = params.SELINUX_MODE ? "SELINUX_MODE=${params.SELINUX_MODE}" : ""
 
-def CREDS_ID = JOB_BASE_NAME == "longhorn-tests-regression" ? "AWS_CREDS_RANCHER_QA" : "AWS_CREDS"
+def CREDS_ID = JOB_BASE_NAME == "longhorn-benchmark-test" ? "AWS_CREDS_RANCHER_QA" : "AWS_CREDS"
 
 node {
 

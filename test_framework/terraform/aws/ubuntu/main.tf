@@ -265,7 +265,7 @@ resource "aws_ebs_volume" "lh_aws_hdd_volume" {
 
   availability_zone = var.aws_availability_zone
   size              = 160
-  type              = "st1"
+  type              = "sc1"
 
   tags = {
     Name = "lh-aws-hdd-volume-${random_string.random_suffix.id}-${count.index}"

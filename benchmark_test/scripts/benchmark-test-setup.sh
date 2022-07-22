@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -x
-set -e
+#set -e
 
 # create and clean tmpdir
 TMPDIR="/tmp/longhorn"
@@ -207,11 +207,53 @@ main(){
   run_fio_longhorn_test 3
 
   adjust_replica_count 2
-  kubectl cordon "$(kubectl get nodes | awk 'NR!=1 && $3!~/control-plane/ {print $1}' | awk 'NR==3')"
+  kubectl cordon "$(kubectl get nodes | awk 'NR!=1 && $3!~/control-plane/ {print $1}' | sort | awk 'NR==3')"
   run_fio_longhorn_test 2
 
   adjust_replica_count 1
-  kubectl cordon "$(kubectl get nodes | awk 'NR!=1 && $3!~/control-plane/ {print $1}' | awk 'NR==2')"
+  kubectl cordon "$(kubectl get nodes | awk 'NR!=1 && $3!~/control-plane/ {print $1}' | sort | awk 'NR==2')"
+  run_fio_longhorn_test 1
+
+  #
+
+  kubectl uncordon "$(kubectl get nodes | awk 'NR!=1 && $3!~/control-plane/ {print $1}' | sort | awk 'NR==3')"
+  kubectl uncordon "$(kubectl get nodes | awk 'NR!=1 && $3!~/control-plane/ {print $1}' | sort | awk 'NR==2')"
+  kubectl uncordon "$(kubectl get nodes | awk 'NR!=1 && $3!~/control-plane/ {print $1}' | sort | awk 'NR==1')"
+
+  kubectl create -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.x/uninstall/uninstall.yaml
+  sleep 300
+  kubectl delete -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.x/deploy/longhorn.yaml
+  kubectl delete -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.x/uninstall/uninstall.yaml
+  sleep 120
+  kubectl get all -n longhorn-system
+  rm "${TF_VAR_tf_workspace}/longhorn.yaml"
+  rm -rf "/tmp/longhorn"
+  mkdir -p "/tmp/longhorn"
+
+  #
+
+  LONGHORN_REPO_BRANCH="v1.2.6-rc1"
+  CUSTOM_LONGHORN_MANAGER_IMAGE="longhornio/longhorn-manager:v1.2.6-rc1"
+  CUSTOM_LONGHORN_ENGINE_IMAGE="longhornio/longhorn-engine:v1.2.6-rc1"
+
+  CUSTOM_LONGHORN_INSTANCE_MANAGER_IMAGE=""
+  CUSTOM_LONGHORN_SHARE_MANAGER_IMAGE=""
+  CUSTOM_LONGHORN_BACKING_IMAGE_MANAGER_IMAGE=""
+
+  generate_longhorn_yaml_manifest "${TF_VAR_tf_workspace}"
+  install_longhorn "${TF_VAR_tf_workspace}/longhorn.yaml"
+
+  run_fio_local_path_test
+
+  adjust_replica_count 3
+  run_fio_longhorn_test 3
+
+  adjust_replica_count 2
+  kubectl cordon "$(kubectl get nodes | awk 'NR!=1 && $3!~/control-plane/ {print $1}' | sort | awk 'NR==3')"
+  run_fio_longhorn_test 2
+
+  adjust_replica_count 1
+  kubectl cordon "$(kubectl get nodes | awk 'NR!=1 && $3!~/control-plane/ {print $1}' | sort | awk 'NR==2')"
   run_fio_longhorn_test 1
 
 }

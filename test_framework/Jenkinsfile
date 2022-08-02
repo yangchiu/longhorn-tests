@@ -11,7 +11,9 @@ def CREDS_ID = JOB_BASE_NAME == "longhorn-tests-regression" ? "AWS_CREDS_RANCHER
 def AIR_GAP_INSTALLATION = params.AIR_GAP_INSTALLATION ? params.AIR_GAP_INSTALLATION : false
 def LONGHORN_INSTALL_VERSION = params.LONGHORN_INSTALL_VERSION ? params.LONGHORN_INSTALL_VERSION : "master"
 def LONGHORN_INSTALL_METHOD = params.LONGHORN_INSTALL_METHOD ? params.LONGHORN_INSTALL_METHOD : "custom"
-def CREATE_LOAD_BALANCER = params.LONGHORN_INSTALL_METHOD == "rancher" ? true : false
+def CREATE_LOAD_BALANCER = true
+def LONGHORN_RANCHER_CHART_REPO = params.LONGHORN_RANCHER_CHART_REPO ? params.LONGHORN_RANCHER_CHART_REPO : ""
+def LONGHORN_RANCHER_CHART_BRANCH = params.LONGHORN_RANCHER_CHART_BRANCH ? params.LONGHORN_RANCHER_CHART_BRANCH : ""
 def REGISTRY_URL
 def REGISTRY_USERNAME
 def REGISTRY_PASSWORD
@@ -33,7 +35,7 @@ node {
         checkout scm
 
         try {
-
+/*
             if (params.AIR_GAP_INSTALLATION) {
 
                 stage('airgap build') {
@@ -65,7 +67,7 @@ node {
                 }
 
             }
-
+*/
             stage('build') {
 
                 if(JOB_BASE_NAME == "longhorn-tests-regression") {

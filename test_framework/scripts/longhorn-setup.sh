@@ -68,7 +68,7 @@ install_rancher() {
 
   helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
   kubectl create namespace cattle-system
-  helm install rancher rancher-latest/rancher --namespace cattle-system --set bootstrapPassword="${RANCHER_BOOTSTRAP_PASSWORD}" --set hostname="${RANCHER_HOSTNAME}" --set replicas=3 --set ingress.tls.source=letsEncrypt --set letsEncrypt.email=yang.chiu@suse.com
+  helm install rancher rancher-latest/rancher --namespace cattle-system --set bootstrapPassword="${RANCHER_BOOTSTRAP_PASSWORD}" --set hostname="${RANCHER_HOSTNAME}" --set replicas=3 --set ingress.tls.source=letsEncrypt --set letsEncrypt.email=yang.chiu@suse.com --version 2.6.9
   kubectl -n cattle-system rollout status deploy/rancher
 }
 
@@ -372,42 +372,11 @@ run_longhorn_tests(){
 
 main(){
 	set_kubeconfig_envvar ${TF_VAR_arch} ${TF_VAR_tf_workspace}
-	create_longhorn_namespace
-	install_backupstores
-	# set debugging mode off to avoid leaking aws secrets to the logs.
-	# DON'T REMOVE!
-	set +x
-	create_aws_secret
-	set -x
-	install_csi_snapshotter_crds
 
-  if [[ "${AIR_GAP_INSTALLATION}" == true ]]; then
-    if [[ "${LONGHORN_INSTALL_METHOD}" == "manifest-file" ]]; then
-      create_registry_secret
-      get_longhorn_manifest
-      customize_longhorn_manifest_for_airgap
-      install_longhorn_by_manifest "${TF_VAR_tf_workspace}/longhorn.yaml"
-    elif [[ "${LONGHORN_INSTALL_METHOD}" == "helm-chart" ]]; then
-      create_registry_secret
-      get_longhorn_chart
-      customize_longhorn_chart_for_airgap
-      install_longhorn_by_chart
-    elif [[ "${LONGHORN_INSTALL_METHOD}" == "rancher" ]]; then
-      install_rancher
-      get_rancher_api_key
-      install_longhorn_by_rancher
-    fi
-    run_longhorn_tests ${WORKSPACE}
-  elif [[ "${LONGHORN_UPGRADE_TEST}" == true || "${LONGHORN_UPGRADE_TEST}" == True ]]; then
-    generate_longhorn_yaml_manifest "${TF_VAR_tf_workspace}"
-    install_longhorn_stable
-    run_longhorn_upgrade_test ${WORKSPACE}
-    run_longhorn_tests ${WORKSPACE}
-  else
-    generate_longhorn_yaml_manifest "${TF_VAR_tf_workspace}"
-    install_longhorn_by_manifest "${TF_VAR_tf_workspace}/longhorn.yaml"
-    run_longhorn_tests ${WORKSPACE}
-  fi
+  install_rancher
+  get_rancher_api_key
+  tail -f /dev/null
+
 }
 
 main

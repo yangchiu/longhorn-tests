@@ -77,6 +77,7 @@ get_rancher_api_key() {
   python3 "${TF_VAR_tf_workspace}/scripts/rancher/webdriver/main.py" "${RANCHER_HOSTNAME}" "${RANCHER_BOOTSTRAP_PASSWORD}"
   RANCHER_ACCESS_KEY=`cat "${PWD}/access_key"`
   RANCHER_SECRET_KEY=`cat "${PWD}/secret_key"`
+  tail -f /dev/null
 }
 
 

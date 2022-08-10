@@ -33,7 +33,7 @@ node {
         checkout scm
 
         try {
-
+/*
             if (params.AIR_GAP_INSTALLATION) {
 
                 stage('airgap build') {
@@ -65,7 +65,7 @@ node {
                 }
 
             }
-
+*/
             stage('build') {
 
                 if(JOB_BASE_NAME == "longhorn-tests-regression") {

@@ -49,9 +49,9 @@ install_local_path_provisioner(){
 generate_longhorn_yaml_manifest(){
   MANIFEST_BASEDIR="${1}"
 
-  LONGHORN_REPO_URI=${LONGHORN_REPO_URI:-"https://github.com/longhorn/longhorn.git"}
-  LONGHORN_REPO_BRANCH=${LONGHORN_REPO_BRANCH:-"master"}
-  LONGHORN_REPO_DIR="${TMPDIR}/longhorn"
+  LONGHORN_MANAGER_REPO_URI=${LONGHORN_MANAGER_REPO_URI:-"https://github.com/longhorn/longhorn-manager.git"}
+  LONGHORN_MANAGER_BRANCH=${LONGHORN_MANAGER_BRANCH:-"master"}
+  LONGHORN_MANAGER_REPO_DIR="${TMPDIR}/longhorn-manager"
 
   CUSTOM_LONGHORN_MANAGER_IMAGE=${CUSTOM_LONGHORN_MANAGER_IMAGE:-"longhornio/longhorn-manager:master-head"}
   CUSTOM_LONGHORN_ENGINE_IMAGE=${CUSTOM_LONGHORN_ENGINE_IMAGE:-"longhornio/longhorn-engine:master-head"}
@@ -61,12 +61,14 @@ generate_longhorn_yaml_manifest(){
   CUSTOM_LONGHORN_BACKING_IMAGE_MANAGER_IMAGE=${CUSTOM_LONGHORN_BACKING_IMAGE_MANAGER_IMAGE:-""}
 
   git clone --single-branch \
-            --branch ${LONGHORN_REPO_BRANCH} \
-            ${LONGHORN_REPO_URI} \
-            ${LONGHORN_REPO_DIR}
+            --branch ${LONGHORN_MANAGER_BRANCH} \
+            ${LONGHORN_MANAGER_REPO_URI} \
+            ${LONGHORN_MANAGER_REPO_DIR}
 
-  cat "${LONGHORN_REPO_DIR}/deploy/longhorn.yaml" > "${MANIFEST_BASEDIR}/longhorn.yaml"
-  sed -i ':a;N;$!ba;s/---\n---/---/g' "${MANIFEST_BASEDIR}/longhorn.yaml"
+  for FILE in `find "${LONGHORN_MANAGER_REPO_DIR}/deploy/install" -type f -name "*\.yaml" | sort`; do
+    cat ${FILE} >> "${MANIFEST_BASEDIR}/longhorn.yaml"
+    echo "---"  >> "${MANIFEST_BASEDIR}/longhorn.yaml"
+  done
 
   # get longhorn default images from yaml manifest
   LONGHORN_MANAGER_IMAGE=`grep -io "longhornio\/longhorn-manager:.*$" "${MANIFEST_BASEDIR}/longhorn.yaml"| head -1`

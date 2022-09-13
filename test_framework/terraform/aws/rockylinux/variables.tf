@@ -20,7 +20,7 @@ variable "aws_availability_zone" {
 
 variable "lh_aws_vpc_name" {
   type        = string
-  default     = "vpc-lh-tests"
+  default     = "longhorn-tests-vpc"
 }
 
 variable "arch" {
@@ -50,7 +50,7 @@ variable "lh_aws_instance_count_worker" {
 
 variable "lh_aws_instance_name_controlplane" {
   type        = string
-  default     = "lh-tests-controlplane"
+  default     = "longhorn-tests-controlplane"
 }
 
 variable "lh_aws_instance_type_controlplane" {
@@ -80,7 +80,7 @@ variable "aws_ssh_private_key_file_path" {
 
 variable "lh_aws_instance_name_worker" {
   type        = string
-  default     = "lh-tests-worker"
+  default     = "longhorn-tests-worker"
 }
 
 variable "lh_aws_instance_root_block_device_size_worker" {

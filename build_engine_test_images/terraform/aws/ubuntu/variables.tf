@@ -26,7 +26,7 @@ variable "aws_availability_zone" {
 
 variable "build_engine_aws_vpc_name" {
   type        = string
-  default     = "vpc-build-test-engine"
+  default     = "longhorn-tests-build-engine-vpc"
 }
 
 variable "build_engine_arch" {
@@ -51,7 +51,7 @@ variable "build_engine_aws_instance_count" {
 
 variable "build_engine_aws_instance_name" {
   type        = string
-  default     = "build_test_engine_node"
+  default     = "longhorn-tests-build-engine"
 }
 
 variable "build_engine_aws_instance_type" {

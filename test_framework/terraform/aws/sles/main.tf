@@ -41,13 +41,13 @@ resource "aws_internet_gateway" "lh_aws_igw" {
   vpc_id = aws_vpc.lh_aws_vpc.id
 
   tags = {
-    Name = "lh_igw"
+    Name = "longhorn-tests-igw-${random_string.random_suffix.id}"
   }
 }
 
 # Create controlplane security group
 resource "aws_security_group" "lh_aws_secgrp_controlplane" {
-  name        = "lh_aws_secgrp_controlplane"
+  name        = "longhorn-tests-secgrp-controlplane"
   description = "Allow all inbound traffic"
   vpc_id      = aws_vpc.lh_aws_vpc.id
 
@@ -107,14 +107,14 @@ resource "aws_security_group" "lh_aws_secgrp_controlplane" {
   }
 
   tags = {
-    Name = "lh_aws_sec_grp_controlplane-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-secgrp-controlplane-${random_string.random_suffix.id}"
   }
 }
 
 
 # Create worker security group
 resource "aws_security_group" "lh_aws_secgrp_worker" {
-  name        = "lh_aws_secgrp_worker"
+  name        = "longhorn-tests-secgrp-worker"
   description = "Allow all inbound traffic"
   vpc_id      = aws_vpc.lh_aws_vpc.id
 
@@ -150,7 +150,7 @@ resource "aws_security_group" "lh_aws_secgrp_worker" {
   }
 
   tags = {
-    Name = "lh_aws_sec_grp_worker-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-secgrp-worker-${random_string.random_suffix.id}"
   }
 }
 
@@ -162,7 +162,7 @@ resource "aws_subnet" "lh_aws_public_subnet" {
   cidr_block = "10.0.1.0/24"
 
   tags = {
-    Name = "lh_public_subnet-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-public-subnet-${random_string.random_suffix.id}"
   }
 }
 
@@ -173,7 +173,7 @@ resource "aws_subnet" "lh_aws_private_subnet" {
   cidr_block = "10.0.2.0/24"
 
   tags = {
-    Name = "lh_private_subnet-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-private-subnet-${random_string.random_suffix.id}"
   }
 }
 
@@ -182,7 +182,7 @@ resource "aws_eip" "lh_aws_eip_nat_gw" {
   vpc      = true
 
   tags = {
-    Name = "lh_eip_nat_gw-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-eip-nat-gw-${random_string.random_suffix.id}"
   }
 }
 
@@ -199,7 +199,7 @@ resource "aws_nat_gateway" "lh_aws_nat_gw" {
   subnet_id     = aws_subnet.lh_aws_public_subnet.id
 
   tags = {
-    Name = "lh_eip_nat_gw-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-nat-gw-${random_string.random_suffix.id}"
   }
 }
 
@@ -218,7 +218,7 @@ resource "aws_route_table" "lh_aws_public_rt" {
   }
 
   tags = {
-    Name = "lh_aws_public_rt-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-public-rt-${random_string.random_suffix.id}"
   }
 }
 
@@ -236,11 +236,11 @@ resource "aws_route_table" "lh_aws_private_rt" {
   }
 
   tags = {
-    Name = "lh_aws_private_rt-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-private-rt-${random_string.random_suffix.id}"
   }
 }
 
-# Assciate public subnet to public route table
+# Associate public subnet to public route table
 resource "aws_route_table_association" "lh_aws_public_subnet_rt_association" {
   depends_on = [
     aws_subnet.lh_aws_public_subnet,
@@ -251,7 +251,7 @@ resource "aws_route_table_association" "lh_aws_public_subnet_rt_association" {
   route_table_id = aws_route_table.lh_aws_public_rt.id
 }
 
-# Assciate private subnet to private route table
+# Associate private subnet to private route table
 resource "aws_route_table_association" "lh_aws_private_subnet_rt_association" {
   depends_on = [
     aws_subnet.lh_aws_private_subnet,
@@ -263,14 +263,22 @@ resource "aws_route_table_association" "lh_aws_private_subnet_rt_association" {
 }
 
 # Create AWS key pair
-resource "aws_key_pair" "lh_aws_pair_key" {
-  key_name   = format("%s_%s", "lh_aws_key_pair", "${random_string.random_suffix.id}")
+resource "aws_key_pair" "lh_aws_key_pair" {
+  key_name   = "longhorn-tests-key-pair-${random_string.random_suffix.id}"
   public_key = file(var.aws_ssh_public_key_file_path)
+
+  tags = {
+    Name = "longhorn-tests-key-pair-${random_string.random_suffix.id}"
+  }
 }
 
 resource "aws_eip" "lh_aws_eip_controlplane" {
   count    = var.lh_aws_instance_count_controlplane
   vpc      = true
+
+  tags = {
+    Name = "longhorn-tests-eip-controlplane-${count.index}-${random_string.random_suffix.id}"
+  }
 }
 
 resource "aws_ebs_volume" "lh_aws_hdd_volume" {
@@ -282,7 +290,7 @@ resource "aws_ebs_volume" "lh_aws_hdd_volume" {
   type              = "st1"
 
   tags = {
-    Name = "lh-aws-hdd-volume-${random_string.random_suffix.id}-${count.index}"
+    Name = "longhorn-tests-hdd-volume-${count.index}-${random_string.random_suffix.id}"
   }
 }
 
@@ -291,7 +299,7 @@ resource "aws_lb_target_group" "lh_aws_lb_tg_443" {
 
   count = var.create_load_balancer ? 1 : 0
 
-  name     = "lh-aws-lb-tg-443-${random_string.random_suffix.id}"
+  name     = "longhorn-tests-lb-tg-443-${random_string.random_suffix.id}"
   port     = 443
   protocol = "TCP"
   vpc_id   = aws_vpc.lh_aws_vpc.id
@@ -304,7 +312,7 @@ resource "aws_lb_target_group" "lh_aws_lb_tg_443" {
   }
 
   tags = {
-    Name = "lh-aws-lb-tg-443-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-lb-tg-443-${random_string.random_suffix.id}"
   }
 }
 
@@ -316,7 +324,7 @@ resource "aws_lb" "lh_aws_lb" {
     aws_internet_gateway.lh_aws_igw
   ]
 
-  name               = "lh-aws-lb-${random_string.random_suffix.id}"
+  name               = "longhorn-tests-lb-${random_string.random_suffix.id}"
   internal           = false
   load_balancer_type = "network"
   subnets            = [
@@ -324,7 +332,7 @@ resource "aws_lb" "lh_aws_lb" {
   ]
 
   tags = {
-    Name = "lh-aws-lb-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-lb-${random_string.random_suffix.id}"
   }
 }
 
@@ -347,7 +355,7 @@ resource "aws_lb_listener" "lh_aws_lb_listener_443" {
   }
 
   tags = {
-    Name = "lh-aws-lb-listener-443-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-lb-listener-443-${random_string.random_suffix.id}"
   }
 
 }

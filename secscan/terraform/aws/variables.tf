@@ -22,7 +22,7 @@ variable "aws_availability_zone" {
 
 variable "lh-secscan_aws_vpc_name" {
   type        = string
-  default     = "vpc-lh-secscan"
+  default     = "longhorn-tests-secscan-vpc"
 }
 
 variable "lh-secscan_arch" {
@@ -47,7 +47,7 @@ variable "lh-secscan_aws_instance_count" {
 
 variable "lh-secscan_aws_instance_name" {
   type        = string
-  default     = "build_test_secscan_node"
+  default     = "longhorn-tests-secscan"
 }
 
 variable "lh-secscan_aws_instance_type" {

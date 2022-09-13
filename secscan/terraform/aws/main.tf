@@ -26,13 +26,13 @@ resource "aws_internet_gateway" "lh-secscan_aws_igw" {
   vpc_id = aws_vpc.lh-secscan_aws_vpc.id
 
   tags = {
-    Name = "lh-secscan_igw"
+    Name = "longhorn-tests-secscan-igw-${random_string.random_suffix.id}"
   }
 }
 
 # Create secscan security group
 resource "aws_security_group" "lh-secscan_aws_secgrp" {
-  name        = "lh-secscan_aws_secgrp"
+  name        = "longhorn-tests-secscan-secgrp"
   description = "Allow all inbound traffic"
   vpc_id      = aws_vpc.lh-secscan_aws_vpc.id
 
@@ -52,7 +52,7 @@ resource "aws_security_group" "lh-secscan_aws_secgrp" {
   }
 
   tags = {
-    Name = "lh-secscan_aws_sec_grp_secscan-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-secscan-secgrp-${random_string.random_suffix.id}"
   }
 }
 
@@ -63,7 +63,7 @@ resource "aws_subnet" "lh-secscan_aws_public_subnet" {
   cidr_block = "10.0.1.0/24"
 
   tags = {
-    Name = "lh-secscan_public_subnet-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-secscan-public-subnet-${random_string.random_suffix.id}"
   }
 }
 
@@ -81,11 +81,11 @@ resource "aws_route_table" "lh-secscan_aws_public_rt" {
   }
 
   tags = {
-    Name = "lh-secscan_aws_public_rt-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-secscan-public-rt-${random_string.random_suffix.id}"
   }
 }
 
-# Assciate public subnet to public route table
+# Associate public subnet to public route table
 resource "aws_route_table_association" "lh-secscan_aws_public_subnet_rt_association" {
   depends_on = [
     aws_subnet.lh-secscan_aws_public_subnet,
@@ -97,9 +97,13 @@ resource "aws_route_table_association" "lh-secscan_aws_public_subnet_rt_associat
 }
 
 # Create AWS key pair
-resource "aws_key_pair" "lh-secscan_aws_pair_key" {
-  key_name   = format("%s_%s", "lh-secscan_aws_key_pair", "${random_string.random_suffix.id}")
+resource "aws_key_pair" "lh-secscan_aws_key_pair" {
+  key_name   = "longhorn-tests-secscan-key-pair-${random_string.random_suffix.id}"
   public_key = file(var.aws_ssh_public_key_file_path)
+
+  tags = {
+    Name = "longhorn-tests-secscan-key-pair-${random_string.random_suffix.id}"
+  }
 }
 
 # Create aws instance
@@ -123,7 +127,7 @@ resource "aws_instance" "lh-secscan_aws_instance" {
     volume_size = var.lh-secscan_aws_instance_root_block_device_size
   }
 
-  key_name = aws_key_pair.lh-secscan_aws_pair_key.key_name
+  key_name = aws_key_pair.lh-secscan_aws_key_pair.key_name
   user_data = file("${path.module}/user-data-scripts/provision.sh")
 
   tags = {
@@ -135,6 +139,10 @@ resource "aws_instance" "lh-secscan_aws_instance" {
 
 resource "aws_eip" "lh-secscan_aws_eip_secscan" {
   vpc      = true
+
+  tags = {
+    Name = "longhorn-tests-secscan-eip-${random_string.random_suffix.id}"
+  }
 }
 
 # Associate every EIP with secscan instance

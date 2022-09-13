@@ -52,7 +52,7 @@ resource "aws_vpc" "lh_registry_aws_vpc" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "lh-registry-vpc-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-registry-vpc-${random_string.random_suffix.id}"
   }
 }
 
@@ -61,13 +61,13 @@ resource "aws_internet_gateway" "lh_registry_aws_igw" {
   vpc_id = aws_vpc.lh_registry_aws_vpc.id
 
   tags = {
-    Name = "lh-registry-igw-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-registry-igw-${random_string.random_suffix.id}"
   }
 }
 
 # Create registry security group
 resource "aws_security_group" "lh_registry_aws_secgrp" {
-  name        = "lh_registry_aws_secgrp_${random_string.random_suffix.id}"
+  name        = "longhorn-tests-registry-secgrp-${random_string.random_suffix.id}"
   description = "Allow all inbound traffic"
   vpc_id      = aws_vpc.lh_registry_aws_vpc.id
 
@@ -119,7 +119,7 @@ resource "aws_security_group" "lh_registry_aws_secgrp" {
   }
 
   tags = {
-    Name = "lh-registry-secgrp-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-registry-secgrp-${random_string.random_suffix.id}"
   }
 }
 
@@ -132,7 +132,7 @@ resource "aws_subnet" "lh_registry_aws_public_subnet" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "lh-registry-public-subnet-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-registry-public-subnet-${random_string.random_suffix.id}"
   }
 }
 
@@ -145,7 +145,7 @@ resource "aws_subnet" "lh_registry_aws_private_subnet" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "lh-registry-private-subnet-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-registry-private-subnet-${random_string.random_suffix.id}"
   }
 }
 
@@ -163,7 +163,7 @@ resource "aws_route_table" "lh_registry_aws_public_rt" {
   }
 
   tags = {
-    Name = "lh-registry-aws-public-rt-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-registry-public-rt-${random_string.random_suffix.id}"
   }
 }
 
@@ -181,7 +181,7 @@ resource "aws_route_table" "lh_registry_aws_private_rt" {
   }
 
   tags = {
-    Name = "lh-registry-aws-private-rt-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-registry-private-rt-${random_string.random_suffix.id}"
   }
 }
 
@@ -208,9 +208,13 @@ resource "aws_route_table_association" "lh_registry_aws_private_subnet_rt_associ
 }
 
 # Create AWS key pair
-resource "aws_key_pair" "lh_registry_aws_pair_key" {
-  key_name   = format("%s_%s", "lh_registry_aws_key_pair", random_string.random_suffix.id)
+resource "aws_key_pair" "lh_registry_aws_key_pair" {
+  key_name   = "longhorn-tests-registry-key-pair-${random_string.random_suffix.id}"
   public_key = file(var.aws_ssh_public_key_file_path)
+
+  tags = {
+    Name = "longhorn-tests-registry-key-pair-${random_string.random_suffix.id}"
+  }
 }
 
 # Create instance for registry
@@ -236,10 +240,12 @@ resource "aws_instance" "lh_registry_aws_instance" {
     volume_size = 40
   }
 
-  key_name = aws_key_pair.lh_registry_aws_pair_key.key_name
+  key_name = aws_key_pair.lh_registry_aws_key_pair.key_name
 
   tags = {
-    Name = "lh-registry-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-registry-${random_string.random_suffix.id}"
+    DoNotDelete = "true"
+    Owner = "longhorn-infra"
   }
 }
 
@@ -255,7 +261,7 @@ resource "digitalocean_record" "lh_registry" {
 
   domain = data.digitalocean_domain.rancher_domain.id
   type   = "A"
-  name   = "lh-registry-${random_string.random_suffix.id}"
+  name   = "longhorn-tests-registry-${random_string.random_suffix.id}"
   value  = aws_instance.lh_registry_aws_instance.public_ip
   ttl    = 60
 }

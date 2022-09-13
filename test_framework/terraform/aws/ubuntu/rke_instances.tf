@@ -21,7 +21,7 @@ resource "aws_instance" "lh_aws_instance_controlplane_rke" {
     volume_size = var.lh_aws_instance_root_block_device_size_controlplane
   }
 
-  key_name = aws_key_pair.lh_aws_pair_key.key_name
+  key_name = aws_key_pair.lh_aws_key_pair.key_name
 
   user_data = file("${path.module}/user-data-scripts/provision_rke.sh")
 
@@ -81,7 +81,7 @@ resource "aws_instance" "lh_aws_instance_worker_rke" {
     volume_size = var.lh_aws_instance_root_block_device_size_worker
   } 
     
-  key_name = aws_key_pair.lh_aws_pair_key.key_name
+  key_name = aws_key_pair.lh_aws_key_pair.key_name
   
   user_data = file("${path.module}/user-data-scripts/provision_rke.sh")
   

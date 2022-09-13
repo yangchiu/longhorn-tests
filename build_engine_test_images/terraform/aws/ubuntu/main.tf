@@ -35,13 +35,13 @@ resource "aws_internet_gateway" "build_engine_aws_igw" {
   vpc_id = aws_vpc.build_engine_aws_vpc.id
 
   tags = {
-    Name = "build_engine_igw"
+    Name = "longhorn-tests-build-engine-igw-${random_string.random_suffix.id}"
   }
 }
 
 # Create build_node security group
 resource "aws_security_group" "build_engine_aws_secgrp" {
-  name        = "build_engine_aws_secgrp"
+  name        = "longhorn-tests-build-engine-secgrp"
   description = "Allow all inbound traffic"
   vpc_id      = aws_vpc.build_engine_aws_vpc.id
 
@@ -61,7 +61,7 @@ resource "aws_security_group" "build_engine_aws_secgrp" {
   }
 
   tags = {
-    Name = "build_engine_aws_sec_grp_build_node-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-build-engine-secgrp-${random_string.random_suffix.id}"
   }
 }
 
@@ -72,7 +72,7 @@ resource "aws_subnet" "build_engine_aws_public_subnet" {
   cidr_block = "10.0.1.0/24"
 
   tags = {
-    Name = "build_engine_public_subnet-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-build-engine-public-subnet-${random_string.random_suffix.id}"
   }
 }
 
@@ -90,11 +90,11 @@ resource "aws_route_table" "build_engine_aws_public_rt" {
   }
 
   tags = {
-    Name = "build_engine_aws_public_rt-${random_string.random_suffix.id}"
+    Name = "longhorn-tests-build-engine-public-rt-${random_string.random_suffix.id}"
   }
 }
 
-# Assciate public subnet to public route table
+# Associate public subnet to public route table
 resource "aws_route_table_association" "build_engine_aws_public_subnet_rt_association" {
   depends_on = [
     aws_subnet.build_engine_aws_public_subnet,
@@ -106,8 +106,8 @@ resource "aws_route_table_association" "build_engine_aws_public_subnet_rt_associ
 }
 
 # Create AWS key pair
-resource "aws_key_pair" "build_engine_aws_pair_key" {
-  key_name   = format("%s_%s", "build_engine_aws_key_pair", "${random_string.random_suffix.id}")
+resource "aws_key_pair" "build_engine_aws_key_pair" {
+  key_name   = "longhorn-tests-build-engine-key-pair-${random_string.random_suffix.id}"
   public_key = file(var.aws_ssh_public_key_file_path)
 }
 
@@ -134,7 +134,7 @@ resource "aws_instance" "build_engine_aws_instance" {
     volume_size = var.build_engine_aws_instance_root_block_device_size
   }
 
-  key_name = aws_key_pair.build_engine_aws_pair_key.key_name
+  key_name = aws_key_pair.build_engine_aws_key_pair.key_name
   user_data = file("${path.module}/user-data-scripts/provision.sh")
   
   tags = {
@@ -147,6 +147,10 @@ resource "aws_instance" "build_engine_aws_instance" {
 resource "aws_eip" "build_engine_aws_eip_build_node" {
   count    = var.build_engine_aws_instance_count
   vpc      = true
+
+  tags = {
+    Name = "longhorn-tests-build-engine-eip-${count.index}-${random_string.random_suffix.id}"
+  }
 }
 
 # Associate every EIP with build_node instance

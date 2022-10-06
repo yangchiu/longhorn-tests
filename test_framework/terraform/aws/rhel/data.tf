@@ -6,11 +6,11 @@ locals {
 data "aws_ami" "aws_ami_rhel" {
 
   most_recent      = true
-  owners           = [var.aws_ami_rhel_account_number]
+  owners           = ["679593333241"]
 
   filter {
     name   = "name"
-    values = ["RHEL-${var.os_distro_version}_HVM*${local.aws_ami_rhel_arch}-*"]
+    values = ["ProComputers RHEL-8.3-arm64-*"]
   }
 }
 

@@ -3692,7 +3692,7 @@ def generate_pod_with_pvc_manifest(pod_name, pvc_name):
            "containers": [
               {
                  "name": "volume-test",
-                 "image": "nginx:stable-alpine",
+                 "image": "nginx:1.21.0",
                  "imagePullPolicy": "IfNotPresent",
                  "volumeMounts": [
                     {
@@ -4053,7 +4053,7 @@ def make_deployment_with_pvc(request):
                      "containers": [
                         {
                            "name": deployment_name,
-                           "image": "nginx:stable-alpine",
+                           "image": "nginx:1.21.0",
                            "volumeMounts": [
                               {
                                  "name": "volv",

@@ -82,6 +82,7 @@ from common import VOLUME_HEAD_NAME
 from common import set_node_scheduling
 from common import SETTING_FAILED_BACKUP_TTL
 from common import wait_for_volume_creation
+from common import make_deployment_with_pvc, get_apps_api_client, create_and_wait_deployment
 
 from backupstore import backupstore_delete_volume_cfg_file
 from backupstore import backupstore_cleanup
@@ -4574,6 +4575,9 @@ def test_backup_failed_disable_auto_cleanup(set_random_backupstore,  # NOQA
 )
 def test_backup_volume_restore_with_access_mode(set_random_backupstore, # NOQA
                                                 client, # NOQA
+                                                core_api,
+                                                apps_api,
+                                                make_deployment_with_pvc,
                                                 access_mode, # NOQA
                                        overridden_restored_access_mode): # NOQA
     """
@@ -4595,14 +4599,27 @@ def test_backup_volume_restore_with_access_mode(set_random_backupstore, # NOQA
                          accessMode=access_mode)
     wait_for_volume_creation(client, test_volume_name)
     volume = wait_for_volume_detached(client, test_volume_name)
-    volume.attach(hostId=common.get_self_host_id())
-    volume = common.wait_for_volume_healthy(client, test_volume_name)
+    #volume.attach(hostId=common.get_self_host_id())
+    #volume = common.wait_for_volume_healthy(client, test_volume_name)
+
+    pv_name = test_volume_name + "-pv"
+    create_pv_for_volume(client, core_api, volume, pv_name)
+    pvc_name = test_volume_name + "-pvc"
+    create_pvc_for_volume(client, core_api, volume, pvc_name)
+    deployment_name = test_volume_name + "-dep"
+    deployment = make_deployment_with_pvc(deployment_name, pvc_name)
+    create_and_wait_deployment(apps_api, deployment)
 
     # Step 2
-    _, b, _, _ = create_backup(client, test_volume_name)
+    snap = create_snapshot(client, test_volume_name)
+    volume = client.by_id_volume(test_volume_name)
+    volume.snapshotBackup(name=snap.name)
+    wait_for_backup_completion(client, test_volume_name, snap.name)
+    _, b = find_backup(client, test_volume_name, snap.name)
+    #_, b, _, _ = create_backup(client, test_volume_name)
 
     # Step 3
-    volume_name_ori_access_mode = test_volume_name + '-default-access-mode'
+    volume_name_ori_access_mode = test_volume_name + '-default-access'
     client.create_volume(name=volume_name_ori_access_mode,
                          size=str(DEFAULT_VOLUME_SIZE * Gi),
                          numberOfReplicas=2,
@@ -4611,7 +4628,7 @@ def test_backup_volume_restore_with_access_mode(set_random_backupstore, # NOQA
     assert volume_ori_access_mode.accessMode == access_mode
 
     # Step 4
-    volume_name_sp_access_mode = test_volume_name + '-specified-access-mode'
+    volume_name_sp_access_mode = test_volume_name + '-specified-access'
     client.create_volume(name=volume_name_sp_access_mode,
                          size=str(DEFAULT_VOLUME_SIZE * Gi),
                          numberOfReplicas=2,

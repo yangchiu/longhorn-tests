@@ -1476,6 +1476,7 @@ def clients(request):
 
 
 def cleanup_client():
+    print('\n====== cleanup client before or after test =======')
     client = get_longhorn_api_client()
     enable_default_disk(client)
 
@@ -2569,21 +2570,29 @@ def get_host_disk_size(disk):
 
 def wait_for_disk_status(client, node_name, disk_name, key, value):
     # use wait_for_disk_storage_available to check storageAvailable
+    if key == 'storageScheduled':
+        print(f'==> check disk {disk_name} status = {key}:{value} for node {node_name}')
     assert key != "storageAvailable"
     for i in range(RETRY_COUNTS):
         node = client.by_id_node(node_name)
         disks = node.disks
+        if key == 'storageScheduled':
+            print(f'Retry {i} : {disks}')
         if len(disks) > 0 and \
                 disk_name in disks and \
                 disks[disk_name][key] == value:
             break
         time.sleep(RETRY_INTERVAL)
-    assert len(disks) != 0
-    assert disk_name in disks
-    assert disks[disk_name][key] == value, \
-        f"Wrong disk({disk_name}) {key} status.\n" \
-        f"Expect={value}\n" \
-        f"Got={disks[disk_name][key]}\n"
+    if len(disks) != 0 and disk_name in disks and disks[disk_name][key] != value:
+        print(f'### {disks[disk_name]} ###')
+        while True:
+            time.sleep(1)
+    #assert len(disks) != 0
+    #assert disk_name in disks
+    #assert disks[disk_name][key] == value, \
+    #    f"Wrong disk({disk_name}) {key} status.\n" \
+    #    f"Expect={value}\n" \
+    #    f"Got={disks[disk_name][key]}\n"
     return node
 
 
@@ -3027,7 +3036,9 @@ def reset_disks_for_all_nodes(client):  # NOQA
     for node in nodes:
         # Reset default disk if there are more than 1 disk
         # on the node.
+        print(f'\n==> reset_disks_for_all_nodes for node {node}')
         cleanup_required = False
+        print(f'# of disks on node = {len(node.disks)}')
         if len(node.disks) > 1:
             cleanup_required = True
         if len(node.disks) == 1:

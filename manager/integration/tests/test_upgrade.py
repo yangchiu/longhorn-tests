@@ -33,6 +33,8 @@ from common import write_pod_volume_data
 from common import read_volume_data
 from common import settings_reset # NOQA
 from common import client, core_api # NOQA
+from classes import Setting
+from manager.integration.tests.classes.volume import Volume
 
 
 @pytest.fixture
@@ -146,24 +148,17 @@ def test_upgrade(upgrade_longhorn_repo_url,
     longhorn_backing_image_manager_image = \
         upgrade_longhorn_backing_image_manager_image
 
-    host_id = get_self_host_id()
     pod_data_path = "/data/test"
 
     pod_volume_name = generate_volume_name()
 
-    auto_salvage_setting = client.by_id_setting(SETTING_AUTO_SALVAGE)
-    setting = client.update(auto_salvage_setting, value="false")
-
-    assert setting.name == SETTING_AUTO_SALVAGE
-    assert setting.value == "false"
+    setting = Setting(client)
+    setting.set_auto_salvage("false")
 
     # Create Volume attached to a node.
-    volume1 = create_and_check_volume(client,
-                                      volume_name,
-                                      size=SIZE)
-    volume1.attach(hostId=host_id)
-    volume1 = wait_for_volume_healthy(client, volume_name)
-    volume1_data = write_volume_random_data(volume1)
+    volume1 = Volume(client)
+    volume1.attach(get_self_host_id())
+    volume1.write_random_data()
 
     # Create Volume used by Pod
     pod_name, pv_name, pvc_name, pod_md5sum = \

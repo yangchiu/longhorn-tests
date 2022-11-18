@@ -40,6 +40,8 @@ resource "aws_instance" "lh_aws_instance_worker_rke2" {
     aws_instance.lh_aws_instance_controlplane_rke2
   ]
 
+  associate_public_ip_address = true
+
   count = var.k8s_distro_name == "rke2" ? var.lh_aws_instance_count_worker : 0
 
   availability_zone = var.aws_availability_zone
@@ -47,9 +49,9 @@ resource "aws_instance" "lh_aws_instance_worker_rke2" {
   ami           = data.aws_ami.aws_ami_oraclelinux.id
   instance_type = var.lh_aws_instance_type_worker
 
-  subnet_id = aws_subnet.lh_aws_private_subnet.id
+  subnet_id = aws_subnet.lh_aws_public_subnet.id
   vpc_security_group_ids = [
-    aws_security_group.lh_aws_secgrp_worker.id
+    aws_security_group.lh_aws_secgrp_controlplane.id
   ]
 
   root_block_device {

@@ -5,6 +5,8 @@ sudo yum group install -y "Development Tools"
 sudo yum install -y iscsi-initiator-utils nfs-utils nfs4-acl-tools jq nc
 sudo systemctl -q enable iscsid
 sudo systemctl start iscsid
+systemctl stop firewalld
+systemctl disable firewalld
 
 curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="server" INSTALL_RKE2_VERSION="${rke2_version}" sh -
 

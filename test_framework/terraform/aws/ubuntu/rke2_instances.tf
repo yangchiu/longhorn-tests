@@ -36,9 +36,11 @@ resource "aws_instance" "lh_aws_instance_controlplane_rke2" {
 resource "aws_instance" "lh_aws_instance_worker_rke2" {
   depends_on = [
     aws_internet_gateway.lh_aws_igw,
-    aws_subnet.lh_aws_private_subnet,
+    aws_subnet.lh_aws_public_subnet,
     aws_instance.lh_aws_instance_controlplane_rke2
   ]
+
+  associate_public_ip_address = true
 
   count = var.k8s_distro_name == "rke2" ? var.lh_aws_instance_count_worker : 0
   
@@ -47,9 +49,9 @@ resource "aws_instance" "lh_aws_instance_worker_rke2" {
   ami           = data.aws_ami.aws_ami_ubuntu.id
   instance_type = var.lh_aws_instance_type_worker
     
-  subnet_id = aws_subnet.lh_aws_private_subnet.id
+  subnet_id = aws_subnet.lh_aws_public_subnet.id
   vpc_security_group_ids = [
-    aws_security_group.lh_aws_secgrp_worker.id
+    aws_security_group.lh_aws_secgrp_controlplane.id
   ]
 
   root_block_device {
@@ -114,7 +116,7 @@ resource "null_resource" "rsync_kubeconfig_file_rke2" {
   ]
 
   provisioner "remote-exec" {
-    inline = ["until([ -f /etc/rancher/rke2/rke2.yaml ] && [ `sudo KUBECONFIG=/etc/rancher/rke2/rke2.yaml /var/lib/rancher/rke2/bin/kubectl get node -o jsonpath='{.items[*].status.conditions}'  | jq '.[] | select(.type  == \"Ready\").status' | grep -ci true` -eq $((${var.lh_aws_instance_count_controlplane} + ${var.lh_aws_instance_count_worker})) ]); do echo \"waiting for rke2 cluster nodes to be running\"; sleep 2; done"]
+    inline = ["until([ -f /etc/rancher/rke2/rke2.yaml ] && [ `KUBECONFIG=/etc/rancher/rke2/rke2.yaml /var/lib/rancher/rke2/bin/kubectl get node -o jsonpath='{.items[*].status.conditions}'  | jq '.[] | select(.type  == \"Ready\").status' | grep -ci true` -eq $((${var.lh_aws_instance_count_controlplane} + ${var.lh_aws_instance_count_worker})) ]); do echo \"waiting for rke2 cluster nodes to be running\"; sleep 2; done"]
 
 
     connection {

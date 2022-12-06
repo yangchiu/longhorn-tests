@@ -1,13 +1,15 @@
 #!/bin/bash
 
-sudo systemctl stop firewalld
-sudo systemctl disable firewalld
+set -ex
 
-sudo yum update -y
-sudo yum group install -y "Development Tools"
-sudo yum install -y iscsi-initiator-utils nfs-utils nfs4-acl-tools
-sudo systemctl -q enable iscsid
-sudo systemctl start iscsid
+systemctl stop firewalld
+systemctl disable firewalld
+
+yum update -y
+yum group install -y "Development Tools"
+yum install -y iscsi-initiator-utils nfs-utils nfs4-acl-tools
+systemctl -q enable iscsid
+systemctl start iscsid
 
 if [ -b "/dev/xvdh" ]; then
   mkfs.ext4 -E nodiscard /dev/xvdh

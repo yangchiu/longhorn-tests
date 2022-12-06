@@ -1,10 +1,12 @@
 #!/bin/bash
 
-sudo zypper ref -y
-sudo zypper install -y -t pattern devel_basis
-sudo zypper install -y open-iscsi nfs-client 
-sudo systemctl -q enable iscsid
-sudo systemctl start iscsid
+set -ex
+
+zypper ref -y
+zypper install -y -t pattern devel_basis
+zypper install -y open-iscsi nfs-client
+systemctl -q enable iscsid
+systemctl start iscsid
 
 if [ -b "/dev/nvme1n1" ]; then
   mkfs.ext4 -E nodiscard /dev/nvme1n1

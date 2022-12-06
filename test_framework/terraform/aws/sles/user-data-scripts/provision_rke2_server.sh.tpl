@@ -1,10 +1,12 @@
-#!/bin/bash 
+#!/bin/bash
 
-sudo zypper ref -y
-sudo zypper install -y -t pattern devel_basis 
-sudo zypper install -y open-iscsi nfs-client jq
-sudo systemctl -q enable iscsid
-sudo systemctl start iscsid
+set -ex
+
+zypper ref -y
+zypper install -y -t pattern devel_basis
+zypper install -y open-iscsi nfs-client jq
+systemctl -q enable iscsid
+systemctl start iscsid
 
 curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="server" INSTALL_RKE2_VERSION="${rke2_version}" sh -
 
@@ -17,6 +19,7 @@ tls-san:
   - ${rke2_server_public_ip}
 node-taint:
   - "node-role.kubernetes.io/control-plane=true:NoSchedule"
+  - "node-role.kubernetes.io/master=true:NoExecute"
 EOF
 
 systemctl enable rke2-server.service

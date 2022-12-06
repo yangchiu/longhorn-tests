@@ -1,7 +1,6 @@
 #!/bin/bash
 
-set -e
-set -x
+set -ex
 
 ip addr add ${server_public_ip} dev lo
 
@@ -19,6 +18,7 @@ tls-san:
   - ${server_public_ip}
 node-taint:
   - "node-role.kubernetes.io/control-plane=true:NoSchedule"
+  - "node-role.kubernetes.io/master=true:NoExecute"
 EOF
 
 systemctl enable rke2-server.service

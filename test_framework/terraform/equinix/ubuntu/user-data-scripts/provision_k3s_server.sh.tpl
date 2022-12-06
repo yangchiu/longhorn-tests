@@ -1,7 +1,6 @@
 #!/bin/bash
 
-set -e
-set -x
+set -ex
 
 ip addr add ${server_public_ip} dev lo
 

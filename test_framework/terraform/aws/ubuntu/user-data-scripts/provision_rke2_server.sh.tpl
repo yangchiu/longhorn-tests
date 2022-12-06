@@ -1,8 +1,9 @@
 #!/bin/bash
 
+set -ex
+
 apt-get update
 apt-get install -y nfs-common jq
-
 
 curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="server" INSTALL_RKE2_VERSION="${rke2_version}" sh -
 
@@ -14,6 +15,9 @@ write-kubeconfig-mode: "0644"
 token: ${rke2_cluster_secret}
 tls-san:
   - ${rke2_server_public_ip}
+node-taint:
+  - "node-role.kubernetes.io/control-plane=true:NoSchedule"
+  - "node-role.kubernetes.io/master=true:NoExecute"
 EOF
 
 systemctl enable rke2-server.service

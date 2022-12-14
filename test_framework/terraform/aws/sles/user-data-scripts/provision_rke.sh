@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo zypper ref -y
+sudo zypper ref
 sudo zypper install -y -t pattern devel_basis
 sudo zypper install -y open-iscsi docker nfs-client
 sudo usermod -aG docker ec2-user

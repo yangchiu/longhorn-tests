@@ -21,6 +21,8 @@ from backupstore import set_random_backupstore # NOQA
 from multiprocessing import Pool
 
 import time
+import random
+import string
 
 
 def write_data_into_pod(pod_name_and_data_path):
@@ -43,57 +45,58 @@ def test_rwx_with_statefulset_multi_pods(core_api, statefulset):  # NOQA
     4. Write data in both pods and compute md5sum.
     5. Compare md5sum of the data with the data written the share manager.
     """
+    count = 10
+    for j in range(count):
+        statefulset_name = 'statefulset-' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(6)) + str(j)
+        share_manager_name = []
+        volumes_name = []
 
-    statefulset_name = 'statefulset-rwx-multi-pods-test'
-    share_manager_name = []
-    volumes_name = []
+        statefulset['metadata']['name'] = \
+            statefulset['spec']['selector']['matchLabels']['app'] = \
+            statefulset['spec']['serviceName'] = \
+            statefulset['spec']['template']['metadata']['labels']['app'] = \
+            statefulset_name
+        statefulset['spec']['volumeClaimTemplates'][0]['spec']['storageClassName']\
+            = 'longhorn'
+        statefulset['spec']['volumeClaimTemplates'][0]['spec']['accessModes'] \
+            = ['ReadWriteMany']
 
-    statefulset['metadata']['name'] = \
-        statefulset['spec']['selector']['matchLabels']['app'] = \
-        statefulset['spec']['serviceName'] = \
-        statefulset['spec']['template']['metadata']['labels']['app'] = \
-        statefulset_name
-    statefulset['spec']['volumeClaimTemplates'][0]['spec']['storageClassName']\
-        = 'longhorn'
-    statefulset['spec']['volumeClaimTemplates'][0]['spec']['accessModes'] \
-        = ['ReadWriteMany']
+        create_and_wait_statefulset(statefulset)
 
-    create_and_wait_statefulset(statefulset)
+        for i in range(2):
+            pvc_name = \
+                statefulset['spec']['volumeClaimTemplates'][0]['metadata']['name']\
+                + '-' + statefulset_name + '-' + str(i)
+            pv_name = get_volume_name(core_api, pvc_name)
 
-    for i in range(2):
-        pvc_name = \
-            statefulset['spec']['volumeClaimTemplates'][0]['metadata']['name']\
-            + '-' + statefulset_name + '-' + str(i)
-        pv_name = get_volume_name(core_api, pvc_name)
+            assert pv_name is not None
 
-        assert pv_name is not None
+            volumes_name.append(pv_name)
+            share_manager_name.append('share-manager-' + pv_name)
 
-        volumes_name.append(pv_name)
-        share_manager_name.append('share-manager-' + pv_name)
+            check_pod_existence(core_api, share_manager_name[i],
+                                namespace=LONGHORN_NAMESPACE)
 
-        check_pod_existence(core_api, share_manager_name[i],
-                            namespace=LONGHORN_NAMESPACE)
+        command = "ls /export | grep -i 'pvc' | wc -l"
 
-    command = "ls /export | grep -i 'pvc' | wc -l"
+        assert exec_command_in_pod(
+            core_api, command, share_manager_name[0], LONGHORN_NAMESPACE) == '1'
+        assert exec_command_in_pod(
+            core_api, command, share_manager_name[1], LONGHORN_NAMESPACE) == '1'
 
-    assert exec_command_in_pod(
-        core_api, command, share_manager_name[0], LONGHORN_NAMESPACE) == '1'
-    assert exec_command_in_pod(
-        core_api, command, share_manager_name[1], LONGHORN_NAMESPACE) == '1'
+        md5sum_pod = []
+        for i in range(2):
+            test_pod_name = statefulset_name + '-' + str(i)
+            test_data = generate_random_data(VOLUME_RWTEST_SIZE)
+            write_pod_volume_data(core_api, test_pod_name, test_data)
+            md5sum_pod.append(test_data)
 
-    md5sum_pod = []
-    for i in range(2):
-        test_pod_name = statefulset_name + '-' + str(i)
-        test_data = generate_random_data(VOLUME_RWTEST_SIZE)
-        write_pod_volume_data(core_api, test_pod_name, test_data)
-        md5sum_pod.append(test_data)
+        for i in range(2):
+            command = 'cat /export' + '/' + volumes_name[i] + '/' + 'test'
+            pod_data = exec_command_in_pod(
+                core_api, command, share_manager_name[i], LONGHORN_NAMESPACE)
 
-    for i in range(2):
-        command = 'cat /export' + '/' + volumes_name[i] + '/' + 'test'
-        pod_data = exec_command_in_pod(
-            core_api, command, share_manager_name[i], LONGHORN_NAMESPACE)
-
-        assert pod_data == md5sum_pod[i]
+            assert pod_data == md5sum_pod[i]
 
 
 def test_rwx_multi_statefulset_with_same_pvc(core_api, pvc, statefulset, pod):  # NOQA

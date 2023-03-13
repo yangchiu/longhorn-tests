@@ -1351,8 +1351,7 @@ def statefulset(request):
                     'storageClassName': DEFAULT_STORAGECLASS_NAME,
                     'resources': {
                         'requests': {
-                            'storage': size_to_string(
-                                           DEFAULT_VOLUME_SIZE * Gi)
+                            'storage': size_to_string(1 * Gi)
                         }
                     }
                 }

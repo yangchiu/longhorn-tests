@@ -12,13 +12,15 @@ from common import find_backup, Gi, volume_name, csi_pv, pod_make  # NOQA
 from common import wait_for_volume_creation, DATA_SIZE_IN_MB_3
 from common import create_pv_for_volume, create_pvc_for_volume
 from common import DEFAULT_STATEFULSET_TIMEOUT, DEFAULT_STATEFULSET_INTERVAL
+from common import wait_delete_pod, wait_for_pod_remount
 from common import get_core_api_client, write_pod_volume_random_data
 from common import create_pvc_spec, make_deployment_with_pvc  # NOQA
-from common import wait_for_pod_phase
 from common import core_api, statefulset, pvc, pod, client  # NOQA
 from common import RETRY_COUNTS, RETRY_INTERVAL
 from backupstore import set_random_backupstore # NOQA
 from multiprocessing import Pool
+import random
+import string
 
 import time
 
@@ -43,57 +45,58 @@ def test_rwx_with_statefulset_multi_pods(core_api, statefulset):  # NOQA
     4. Write data in both pods and compute md5sum.
     5. Compare md5sum of the data with the data written the share manager.
     """
+    count = 10
+    for j in range(count):
+        statefulset_name = 'statefulset-' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(6)) + str(j)
+        share_manager_name = []
+        volumes_name = []
 
-    statefulset_name = 'statefulset-rwx-multi-pods-test'
-    share_manager_name = []
-    volumes_name = []
+        statefulset['metadata']['name'] = \
+            statefulset['spec']['selector']['matchLabels']['app'] = \
+            statefulset['spec']['serviceName'] = \
+            statefulset['spec']['template']['metadata']['labels']['app'] = \
+            statefulset_name
+        statefulset['spec']['volumeClaimTemplates'][0]['spec']['storageClassName']\
+            = 'longhorn'
+        statefulset['spec']['volumeClaimTemplates'][0]['spec']['accessModes'] \
+            = ['ReadWriteMany']
 
-    statefulset['metadata']['name'] = \
-        statefulset['spec']['selector']['matchLabels']['app'] = \
-        statefulset['spec']['serviceName'] = \
-        statefulset['spec']['template']['metadata']['labels']['app'] = \
-        statefulset_name
-    statefulset['spec']['volumeClaimTemplates'][0]['spec']['storageClassName']\
-        = 'longhorn'
-    statefulset['spec']['volumeClaimTemplates'][0]['spec']['accessModes'] \
-        = ['ReadWriteMany']
+        create_and_wait_statefulset(statefulset)
 
-    create_and_wait_statefulset(statefulset)
+        for i in range(2):
+            pvc_name = \
+                statefulset['spec']['volumeClaimTemplates'][0]['metadata']['name']\
+                + '-' + statefulset_name + '-' + str(i)
+            pv_name = get_volume_name(core_api, pvc_name)
 
-    for i in range(2):
-        pvc_name = \
-            statefulset['spec']['volumeClaimTemplates'][0]['metadata']['name']\
-            + '-' + statefulset_name + '-' + str(i)
-        pv_name = get_volume_name(core_api, pvc_name)
+            assert pv_name is not None
 
-        assert pv_name is not None
+            volumes_name.append(pv_name)
+            share_manager_name.append('share-manager-' + pv_name)
 
-        volumes_name.append(pv_name)
-        share_manager_name.append('share-manager-' + pv_name)
+            check_pod_existence(core_api, share_manager_name[i],
+                                namespace=LONGHORN_NAMESPACE)
 
-        check_pod_existence(core_api, share_manager_name[i],
-                            namespace=LONGHORN_NAMESPACE)
+        command = "ls /export | grep -i 'pvc' | wc -l"
 
-    command = "ls /export | grep -i 'pvc' | wc -l"
+        assert exec_command_in_pod(
+            core_api, command, share_manager_name[0], LONGHORN_NAMESPACE) == '1'
+        assert exec_command_in_pod(
+            core_api, command, share_manager_name[1], LONGHORN_NAMESPACE) == '1'
 
-    assert exec_command_in_pod(
-        core_api, command, share_manager_name[0], LONGHORN_NAMESPACE) == '1'
-    assert exec_command_in_pod(
-        core_api, command, share_manager_name[1], LONGHORN_NAMESPACE) == '1'
+        md5sum_pod = []
+        for i in range(2):
+            test_pod_name = statefulset_name + '-' + str(i)
+            test_data = generate_random_data(VOLUME_RWTEST_SIZE)
+            write_pod_volume_data(core_api, test_pod_name, test_data)
+            md5sum_pod.append(test_data)
 
-    md5sum_pod = []
-    for i in range(2):
-        test_pod_name = statefulset_name + '-' + str(i)
-        test_data = generate_random_data(VOLUME_RWTEST_SIZE)
-        write_pod_volume_data(core_api, test_pod_name, test_data)
-        md5sum_pod.append(test_data)
+        for i in range(2):
+            command = 'cat /export' + '/' + volumes_name[i] + '/' + 'test'
+            pod_data = exec_command_in_pod(
+                core_api, command, share_manager_name[i], LONGHORN_NAMESPACE)
 
-    for i in range(2):
-        command = 'cat /export' + '/' + volumes_name[i] + '/' + 'test'
-        pod_data = exec_command_in_pod(
-            core_api, command, share_manager_name[i], LONGHORN_NAMESPACE)
-
-        assert pod_data == md5sum_pod[i]
+            assert pod_data == md5sum_pod[i]
 
 
 def test_rwx_multi_statefulset_with_same_pvc(core_api, pvc, statefulset, pod):  # NOQA
@@ -340,9 +343,10 @@ def test_rwx_delete_share_manager_pod(core_api, statefulset):  # NOQA
     2. Wait for StatefulSet to come up healthy.
     3. Write data and compute md5sum.
     4. Delete the share manager pod.
-    5. Check the data md5sum in statefulSet.
-    6. Write more data to it and compute md5sum.
-    7. Check the data md5sum in share manager volume.
+    5. Wait for a new pod to be created and volume getting attached.
+    6. Check the data md5sum in statefulSet.
+    7. Write more data to it and compute md5sum.
+    8. Check the data md5sum in share manager volume.
     """
 
     statefulset_name = 'statefulset-delete-share-manager-pods-test'
@@ -373,8 +377,10 @@ def test_rwx_delete_share_manager_pod(core_api, statefulset):  # NOQA
     delete_and_wait_pod(core_api, share_manager_name,
                         namespace=LONGHORN_NAMESPACE)
 
-    wait_for_pod_phase(core_api, share_manager_name,
-                       namespace=LONGHORN_NAMESPACE, pod_phase="Running")
+    target_pod = core_api.read_namespaced_pod(name=pod_name,
+                                              namespace='default')
+    wait_delete_pod(core_api, target_pod.metadata.uid)
+    wait_for_pod_remount(core_api, pod_name)
 
     test_data_2 = generate_random_data(VOLUME_RWTEST_SIZE)
     write_pod_volume_data(core_api, pod_name, test_data_2, filename='test2')

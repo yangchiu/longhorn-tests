@@ -52,15 +52,11 @@ BACKING_IMAGE_RAW_CHECKSUM = \
     "304f3ed30ca6878e9056ee6f1b02b328239f0d0c2c1272840998212f9734b196371560b" \
     "3b939037e4f4c2884ce457c2cbc9f0621f4f5d1ca983983c8cdf8cd9a"
 BACKING_IMAGE_EXT4_SIZE = 32 * Mi
-BACKING_IMAGE_STATE_READY = "ready"
-BACKING_IMAGE_STATE_IN_PROGRESS = "in-progress"
-BACKING_IMAGE_STATE_FAILED = "failed"
 
 PORT = ":9500"
 
 RETRY_COMMAND_COUNT = 3
 RETRY_COUNTS = 150
-RETRY_COUNTS_SHORT = 30
 RETRY_INTERVAL = 1
 RETRY_INTERVAL_LONG = 2
 RETRY_BACKUP_COUNTS = 300
@@ -107,11 +103,10 @@ DEFAULT_POD_INTERVAL = 1
 DEFAULT_POD_TIMEOUT = 180
 
 DEFAULT_STATEFULSET_INTERVAL = 1
-DEFAULT_STATEFULSET_TIMEOUT = 180
+DEFAULT_STATEFULSET_TIMEOUT = 21600
 
 DEFAULT_DEPLOYMENT_INTERVAL = 1
 DEFAULT_DEPLOYMENT_TIMEOUT = 120
-WAIT_FOR_POD_STABLE_MAX_RETRY = 30
 
 
 DEFAULT_VOLUME_SIZE = 3  # In Gi
@@ -182,22 +177,6 @@ SETTING_BACKING_IMAGE_CLEANUP_WAIT_INTERVAL = \
 SETTING_DISABLE_REVISION_COUNTER = "disable-revision-counter"
 SETTING_ORPHAN_AUTO_DELETION = "orphan-auto-deletion"
 SETTING_FAILED_BACKUP_TTL = "failed-backup-ttl"
-SETTING_CONCURRENT_AUTO_ENGINE_UPGRADE_NODE_LIMIT = \
-    "concurrent-automatic-engine-upgrade-per-node-limit"
-SETTING_SUPPORT_BUNDLE_FAILED_LIMIT = "support-bundle-failed-history-limit"
-SETTING_RESTORE_RECURRING_JOBS = "restore-volume-recurring-jobs"
-SETTING_SNAPSHOT_DATA_INTEGRITY = "snapshot-data-integrity"
-SETTING_SNAPSHOT_DATA_INTEGRITY_IMMEDIATE_CHECK_AFTER_SNAPSHOT_CREATION = \
-    "snapshot-data-integrity-immediate-check-after-snapshot-creation"
-SETTING_SNAPSHOT_DATA_INTEGRITY_CRONJOB = "snapshot-data-integrity-cronjob"
-SETTING_SNAPSHOT_FAST_REPLICA_REBUILD_ENABLED = "fast-replica-rebuild-enabled"
-SETTING_CONCURRENT_VOLUME_BACKUP_RESTORE = \
-    "concurrent-volume-backup-restore-per-node-limit"
-
-SNAPSHOT_DATA_INTEGRITY_IGNORED = "ignored"
-SNAPSHOT_DATA_INTEGRITY_DISABLED = "disabled"
-SNAPSHOT_DATA_INTEGRITY_ENABLED = "enabled"
-SNAPSHOT_DATA_INTEGRITY_FAST_CHECK = "fast-check"
 
 CSI_UNKNOWN = 0
 CSI_TRUE = 1
@@ -255,16 +234,11 @@ NODE_UPDATE_RETRY_INTERVAL = 6
 NODE_UPDATE_RETRY_COUNT = 30
 disk_being_syncing = "being syncing and please retry later"
 
-FS_TYPE_EXT4 = "ext4"
-FS_TYPE_XFS = "xfs"
-
 # customize the timeout for HDD
-disktype = os.environ.get('LONGHORN_DISK_TYPE')
+disktype = os.environ['LONGHORN_DISK_TYPE']
 if disktype == "hdd":
     RETRY_COUNTS *= 32
-    DEFAULT_POD_TIMEOUT *= 32
     DEFAULT_DEPLOYMENT_TIMEOUT *= 32
-    DEFAULT_STATEFULSET_TIMEOUT *= 32
     STREAM_EXEC_TIMEOUT *= 32
 
 
@@ -363,23 +337,6 @@ def cleanup_all_volumes(client):
     assert len(volumes) == 0
 
 
-def create_volume_and_backup(client, vol_name, vol_size, backup_data_size):
-    client.create_volume(name=vol_name,
-                         numberOfReplicas=1,
-                         size=str(vol_size))
-    backup_volume = wait_for_volume_detached(client, vol_name)
-    backup_volume.attach(hostId=get_self_host_id())
-    backup_volume = wait_for_volume_healthy(client, vol_name)
-
-    data = {'pos': 0,
-            'len': backup_data_size,
-            'content': generate_random_data(backup_data_size)}
-
-    _, backup, _, _ = create_backup(client, vol_name, data)
-
-    return backup_volume, backup
-
-
 def create_backup(client, volname, data={}, labels={}):
     volume = client.by_id_volume(volname)
     create_snapshot(client, volname)
@@ -457,8 +414,7 @@ def delete_backup_volume(client, volume_name):
 
 def create_and_check_volume(client, volume_name,
                             num_of_replicas=3, size=SIZE, backing_image="",
-                            frontend=VOLUME_FRONTEND_BLOCKDEV,
-                            snapshot_data_integrity=SNAPSHOT_DATA_INTEGRITY_IGNORED): # NOQA
+                            frontend=VOLUME_FRONTEND_BLOCKDEV):
     """
     Create a new volume with the specified parameters. Assert that the new
     volume is detached and that all of the requested parameters match.
@@ -476,8 +432,7 @@ def create_and_check_volume(client, volume_name,
         backing_image = None
     client.create_volume(name=volume_name, size=size,
                          numberOfReplicas=num_of_replicas,
-                         backingImage=backing_image, frontend=frontend,
-                         snapshotDataIntegrity=snapshot_data_integrity)
+                         backingImage=backing_image, frontend=frontend)
     volume = wait_for_volume_detached(client, volume_name)
     assert volume.name == volume_name
     assert volume.size == size
@@ -819,29 +774,14 @@ def copy_pod_volume_data(api, pod_name, src_path, dest_path):
         tty=False)
 
 
-def copy_file_to_volume_dev_mb_data(src_path, dest_path,
-                                    src_offset, dest_offset, size_in_mb,
-                                    timeout_cnt=5):
-    cmd = [
-        '/bin/sh',
-        '-c',
-        'dd if=%s of=%s bs=1M count=%d skip=%d seek=%d' %
-        (src_path, dest_path, size_in_mb, src_offset, dest_offset)
-    ]
-    with timeout(seconds=STREAM_EXEC_TIMEOUT * timeout_cnt,
-                 error_message='Timeout on copying file to dev'):
-        subprocess.check_call(cmd)
-
-
-def write_volume_dev_random_mb_data(path, offset_in_mb, length_in_mb,
-                                    timeout_cnt=3):
+def write_volume_dev_random_mb_data(path, offset_in_mb, length_in_mb):
     write_cmd = [
         '/bin/sh',
         '-c',
         'dd if=/dev/urandom of=%s bs=1M seek=%d count=%d' %
         (path, offset_in_mb, length_in_mb)
     ]
-    with timeout(seconds=STREAM_EXEC_TIMEOUT * timeout_cnt,
+    with timeout(seconds=STREAM_EXEC_TIMEOUT * 3,
                  error_message='Timeout on writing dev'):
         subprocess.check_call(write_cmd)
 
@@ -849,15 +789,13 @@ def write_volume_dev_random_mb_data(path, offset_in_mb, length_in_mb,
 def get_volume_dev_mb_data_md5sum(path, offset_in_mb, length_in_mb):
     md5sum_command = [
         '/bin/sh', '-c',
-        'dd if=%s bs=1M skip=%d count=%d | md5sum' %
+        'dd if=%s bs=1M skip=%d count=%d | md5sum | awk \'{print $1}\'' %
         (path, offset_in_mb, length_in_mb)
     ]
 
     with timeout(seconds=STREAM_EXEC_TIMEOUT * 5,
                  error_message='Timeout on computing dev md5sum'):
-        output = subprocess.check_output(
-            md5sum_command).strip().decode('utf-8')
-        return output.split(" ")[1]
+        return subprocess.check_output(md5sum_command).strip().decode('utf-8')
 
 
 def size_to_string(volume_size):
@@ -1148,17 +1086,17 @@ def apps_api(request):
 
 
 @pytest.fixture
-def batch_v1_api(request):
+def batch_v1_beta_api(request):
     """
-    Create a new BatchV1Api instance.
+    Create a new BatchV1beta1Api instance.
     Returns:
-        A new BatchV1Api Instance.
+        A new BatchV1beta1Api Instance.
     """
     c = Configuration()
     c.assert_hostname = False
     Configuration.set_default(c)
     k8sconfig.load_incluster_config()
-    api = k8sclient.BatchV1Api()
+    api = k8sclient.BatchV1beta1Api()
 
     return api
 
@@ -1229,18 +1167,6 @@ def csi_pv_backingimage(request):
     return pv_manifest
 
 
-def check_pvc_in_specific_status(api, pvc_name, status):
-    for i in range(RETRY_EXEC_COUNTS):
-        claim = \
-            api.read_namespaced_persistent_volume_claim(name=pvc_name,
-                                                        namespace='default')
-        if claim.status.phase == "bound":
-            break
-        time.sleep(RETRY_INTERVAL)
-
-    assert claim.status.phase == status
-
-
 def get_pvc_manifest(request):
     pvc_manifest = {
         'apiVersion': 'v1',
@@ -1284,6 +1210,17 @@ def get_pvc_manifest(request):
     request.addfinalizer(finalizer)
 
     return pvc_manifest
+
+
+def check_pvc_in_specific_status(api, pvc_name, status):
+    for i in range(RETRY_EXEC_COUNTS):
+        claim = \
+            api.read_namespaced_persistent_volume_claim(name=pvc_name,
+                                                        namespace='default')
+        if claim.status.phase == "bound":
+            break
+        time.sleep(RETRY_INTERVAL)
+    assert claim.status.phase == status
 
 
 @pytest.fixture
@@ -1351,8 +1288,7 @@ def statefulset(request):
                     'storageClassName': DEFAULT_STORAGECLASS_NAME,
                     'resources': {
                         'requests': {
-                            'storage': size_to_string(
-                                           DEFAULT_VOLUME_SIZE * Gi)
+                            'storage': size_to_string(1 * Gi)
                         }
                     }
                 }
@@ -1555,10 +1491,6 @@ def cleanup_client():
         cleanup_all_backing_images(client)
 
     cleanup_storage_class()
-    if system_backup_feature_supported(client):
-        system_restores_cleanup(client)
-
-    cleanup_all_support_bundles(client)
 
     # enable nodes scheduling
     reset_node(client)
@@ -1920,16 +1852,6 @@ def wait_for_volume_frontend_disabled(client, volume_name, state=True):
             break
         except AssertionError:
             time.sleep(RETRY_INTERVAL)
-
-
-def wait_for_volume_option_trim_auto_removing_snapshots(client, volume_name, enabled):  # NOQA
-    for i in range(RETRY_COUNTS_SHORT):
-        volume = client.by_id_volume(volume_name)
-        if volume.controllers[0].unmapMarkSnapChainRemovedEnabled == enabled:
-            break
-        time.sleep(RETRY_INTERVAL)
-    assert volume.controllers[0].unmapMarkSnapChainRemovedEnabled == enabled
-    return volume
 
 
 def wait_for_snapshot_purge(client, volume_name, *snaps):
@@ -3162,25 +3084,7 @@ def reset_settings(client):
         setting_default_value = setting.definition.default
         setting_readonly = setting.definition.readOnly
 
-        # We don't provide the setup for the storage network, hence there is no
-        # default value. We need to skip here to avoid test failure when
-        # resetting this to an empty default value.
         if setting_name == "storage-network":
-            continue
-
-        # The version of the support bundle kit will be specified by a command
-        # option when starting the manager. And setting requires a value.
-        #
-        # Longhorn has a default version for each release provided to the
-        # manager when starting. Meaning this setting doesn't have a default
-        # value.
-        #
-        # The design grants the ability to update later by cases for
-        # troubleshooting purposes. Meaning this setting is editable.
-        #
-        # So we need to skip here to avoid test failure when resetting this to
-        # an empty default value.
-        if setting_name == "support-bundle-manager-image":
             continue
 
         s = client.by_id_setting(setting_name)
@@ -3548,6 +3452,11 @@ def wait_statefulset(statefulset_manifest):
         if s_set is not None and s_set.status.ready_replicas == replicas:
             break
         time.sleep(DEFAULT_STATEFULSET_INTERVAL)
+    print(f"expect replicas = {replicas}")
+    print(f"s_set.status.ready_replicas = {s_set.status.ready_replicas}")
+    if s_set.status.ready_replicas != replicas:
+        print(f"s_set = {s_set}")
+    print()
     assert s_set.status.ready_replicas == replicas
 
 
@@ -3923,15 +3832,12 @@ def create_snapshot(longhorn_api_client, volume_name):
     return snap
 
 
-def wait_for_snapshot_count(volume, number,
-                            retry_counts=120,
-                            count_removed=False):
+def wait_for_snapshot_count(volume, number, retry_counts=120):
     for _ in range(retry_counts):
         count = 0
         for snapshot in volume.snapshotList():
-            if snapshot.removed is False or count_removed:
+            if snapshot.removed is False:
                 count += 1
-
         if count == number:
             return
         time.sleep(RETRY_SNAPSHOT_INTERVAL)
@@ -3964,20 +3870,7 @@ def wait_for_volume_expansion(longhorn_api_client, volume_name):
     for i in range(RETRY_COUNTS):
         volume = longhorn_api_client.by_id_volume(volume_name)
         engine = get_volume_engine(volume)
-        if engine.size == volume.size:
-            complete = True
-            break
-        time.sleep(RETRY_INTERVAL)
-    assert complete
-
-
-def wait_for_expansion_error_clear(longhorn_api_client, volume_name):
-    complete = False
-    for i in range(RETRY_COUNTS):
-        volume = longhorn_api_client.by_id_volume(volume_name)
-        engine = get_volume_engine(volume)
-        if engine.lastExpansionFailedAt == "" and \
-                engine.lastExpansionError == "":
+        if engine.size == volume.size and volume.state == "detached":
             complete = True
             break
         time.sleep(RETRY_INTERVAL)
@@ -4004,17 +3897,11 @@ def wait_for_dr_volume_expansion(longhorn_api_client, volume_name, size_str):
             if engine.size == volume.size:
                 complete = True
                 break
-        time.sleep(RETRY_INTERVAL_LONG)
+        time.sleep(RETRY_INTERVAL)
     assert complete
 
 
-def expand_and_wait_for_pvc(api, pvc, size):
-    pvc['spec']['resources'] = {
-        'requests': {
-            'storage': size_to_string(size)
-        }
-    }
-
+def expand_and_wait_for_pvc(api, pvc):
     pvc_name = pvc['metadata']['name']
     api.patch_namespaced_persistent_volume_claim(
         pvc_name, 'default', pvc)
@@ -4065,51 +3952,11 @@ def fail_replica_expansion(client, api, volname, size, replicas=None):
         if not r.instanceManagerName:
             raise Exception(
                 "Should use replica objects in the running volume,"
-                "otherwise the field r.instanceManagerName is empty")
+                "otherwise the field r.instanceManagerName is emtpy")
         stream(api.connect_get_namespaced_pod_exec,
                r.instanceManagerName,
                LONGHORN_NAMESPACE, command=cmd,
                stderr=True, stdin=False, stdout=True, tty=False)
-
-
-def fix_replica_expansion_failure(client, api, volname, size, replicas=None):
-    if replicas is None:
-        volume = client.by_id_volume(volname)
-        replicas = volume.replicas
-
-    for r in replicas:
-        if not r.instanceManagerName:
-            raise Exception(
-                "Should use replica objects in the running volume,"
-                "otherwise the field r.instanceManagerName is empty")
-
-        tmp_meta_file_name = \
-            EXPANSION_SNAP_TMP_META_NAME_PATTERN % size
-        tmp_meta_file_path = \
-            INSTANCE_MANAGER_HOST_PATH_PREFIX + \
-            r.dataPath + "/" + tmp_meta_file_name
-
-        removed = False
-        for i in range(RETRY_COMMAND_COUNT):
-            # os.path.join() cannot deal with the path containing "/"
-            cmd = [
-                '/bin/sh', '-c',
-                'rm -rf %s && sync' % tmp_meta_file_path
-            ]
-            stream(api.connect_get_namespaced_pod_exec,
-                   r.instanceManagerName,
-                   LONGHORN_NAMESPACE, command=cmd,
-                   stderr=True, stdin=False, stdout=True, tty=False)
-            cmd = ['/bin/sh', '-c', 'ls %s' % tmp_meta_file_path]
-            output = stream(
-                api.connect_get_namespaced_pod_exec,
-                r.instanceManagerName, LONGHORN_NAMESPACE, command=cmd,
-                stderr=True, stdin=False, stdout=True, tty=False)
-            if "No such file or directory" in output:
-                removed = True
-                break
-            time.sleep(RETRY_INTERVAL_LONG)
-        assert removed
 
 
 def wait_for_expansion_failure(client, volume_name, last_failed_at=""):
@@ -4124,10 +3971,10 @@ def wait_for_expansion_failure(client, volume_name, last_failed_at=""):
     assert failed
 
 
-def wait_for_rebuild_complete(client, volume_name, retry_count=RETRY_COUNTS):
+def wait_for_rebuild_complete(client, volume_name):
     completed = 0
     rebuild_statuses = {}
-    for i in range(retry_count):
+    for i in range(RETRY_COUNTS):
         completed = 0
         v = client.by_id_volume(volume_name)
         rebuild_statuses = v.rebuildStatus
@@ -4153,11 +4000,9 @@ def wait_for_rebuild_complete(client, volume_name, retry_count=RETRY_COUNTS):
     assert completed == len(rebuild_statuses)
 
 
-def wait_for_rebuild_start(client, volume_name,
-                           retry_count=RETRY_COUNTS,
-                           retry_interval=RETRY_INTERVAL):
+def wait_for_rebuild_start(client, volume_name):
     started = False
-    for i in range(retry_count):
+    for i in range(RETRY_COUNTS):
         v = client.by_id_volume(volume_name)
         rebuild_statuses = v.rebuildStatus
         for status in rebuild_statuses:
@@ -4166,7 +4011,7 @@ def wait_for_rebuild_start(client, volume_name,
                 break
         if started:
             break
-        time.sleep(retry_interval)
+        time.sleep(RETRY_INTERVAL)
     assert started
     return status.fromReplica, status.replica
 
@@ -4316,39 +4161,21 @@ def create_and_wait_deployment(apps_api, deployment_manifest):
 
 def wait_and_get_any_deployment_pod(core_api, deployment_name,
                                     is_phase="Running"):
-    """
-    Add mechanism to wait for a stable running pod when deployment restarts its
-    workload, since Longhorn manager could create/delete the new workload pod
-    multiple times, it's possible that we get an unstable pod which will be
-    deleted immediately, so add a wait mechanism to get a stable running pod.
-    ref: https://github.com/longhorn/longhorn/issues/4814
-    """
-    stable_pod = None
-    wait_for_stable_retry = 0
-
     for _ in range(DEFAULT_DEPLOYMENT_TIMEOUT):
         label_selector = "name=" + deployment_name
         pods = core_api.list_namespaced_pod(namespace="default",
                                             label_selector=label_selector)
         for pod in pods.items:
             if pod.status.phase == is_phase:
-                if stable_pod is None or \
-                        stable_pod.metadata.name != pod.metadata.name:
-                    stable_pod = pod
-                    wait_for_stable_retry = 0
-                    break
-                else:
-                    wait_for_stable_retry += 1
-                    if wait_for_stable_retry == WAIT_FOR_POD_STABLE_MAX_RETRY:
-                        return stable_pod
+                return pod
 
         time.sleep(DEFAULT_DEPLOYMENT_INTERVAL)
     assert False
 
 
-def wait_delete_deployment(apps_api, deployment_name, namespace='default'):
+def wait_delete_deployment(apps_api, deployment_name):
     for i in range(DEFAULT_DEPLOYMENT_TIMEOUT):
-        ret = apps_api.list_namespaced_deployment(namespace=namespace)
+        ret = apps_api.list_namespaced_deployment(namespace='default')
         found = False
         for item in ret.items:
             if item.metadata.name == deployment_name:
@@ -4369,7 +4196,7 @@ def delete_and_wait_deployment(apps_api, deployment_name, namespace='default'):
     except ApiException as e:
         assert e.status == 404
 
-    wait_delete_deployment(apps_api, deployment_name, namespace)
+    wait_delete_deployment(apps_api, deployment_name)
 
 
 def get_deployment_pod_names(core_api, deployment):
@@ -4443,7 +4270,7 @@ def wait_for_pod_remount(core_api, pod_name, chk_path="/data/lost+found"):
     assert ready
 
 
-def offline_expand_attached_volume(client, volume_name, size=EXPAND_SIZE):
+def expand_attached_volume(client, volume_name, size=EXPAND_SIZE):
     volume = wait_for_volume_healthy(client, volume_name)
     engine = get_volume_engine(volume)
 
@@ -4451,7 +4278,6 @@ def offline_expand_attached_volume(client, volume_name, size=EXPAND_SIZE):
     volume = wait_for_volume_detached(client, volume.name)
     volume.expand(size=size)
     wait_for_volume_expansion(client, volume.name)
-    volume = wait_for_volume_detached(client, volume.name)
     volume.attach(hostId=engine.hostId, disableFrontend=False)
     wait_for_volume_healthy(client, volume_name)
 
@@ -4743,7 +4569,7 @@ def check_backing_image_disk_map_status(client, bi_name, expect_cnt, expect_disk
     # that have expect_disk_state
 
     for i in range(RETRY_COUNTS):
-        backing_image = client.by_id_backing_image(bi_name)
+        backing_image = client.by_id_backing_image(BACKING_IMAGE_NAME)
 
         count = 0
         for disk_id, status in iter(backing_image.diskFileStatusMap.items()):
@@ -4822,15 +4648,6 @@ def recurring_job_feature_supported(client):
         return False
 
 
-# this function will check if system backup feature is supported, and is added
-# for the case of test_upgrade starting from Longhorn >= v1.4.0
-def system_backup_feature_supported(client):
-    if hasattr(client.by_id_schema("systemBackup"), "id"):
-        return True
-    else:
-        return False
-
-
 def cleanup_all_recurring_jobs(client):
     recurring_jobs = client.list_recurring_job()
     for recurring_job in recurring_jobs:
@@ -4887,12 +4704,7 @@ def check_recurring_jobs(client, recurring_jobs):
         if len(spec["groups"]) > 0:
             assert recurring_job.groups == spec["groups"]
         assert recurring_job.cron == spec["cron"]
-
-        expect_retain = spec["retain"]
-        if recurring_job.task == "snapshot-cleanup":
-            expect_retain = 0
-        assert recurring_job.retain == expect_retain
-
+        assert recurring_job.retain == spec["retain"]
         assert recurring_job.concurrency == spec["concurrency"]
 
 
@@ -4948,12 +4760,12 @@ def wait_for_volume_recurring_job_update(volume, jobs=[], groups=[]):
     assert ok
 
 
-def wait_for_cron_job_create(batch_v1_api, label="",
+def wait_for_cron_job_create(batch_v1_beta_api, label="",
                              retry_counts=RETRY_COUNTS):
     exist = False
     for _ in range(retry_counts):
-        job = batch_v1_api.list_namespaced_cron_job('longhorn-system',
-                                                    label_selector=label)
+        job = batch_v1_beta_api.list_namespaced_cron_job('longhorn-system',
+                                                         label_selector=label)
         if len(job.items) != 0:
             exist = True
             break
@@ -4962,12 +4774,12 @@ def wait_for_cron_job_create(batch_v1_api, label="",
     assert exist
 
 
-def wait_for_cron_job_delete(batch_v1_api, label="",
+def wait_for_cron_job_delete(batch_v1_beta_api, label="",
                              retry_counts=RETRY_COUNTS):
     exist = True
     for _ in range(retry_counts):
-        job = batch_v1_api.list_namespaced_cron_job('longhorn-system',
-                                                    label_selector=label)
+        job = batch_v1_beta_api.list_namespaced_cron_job('longhorn-system',
+                                                         label_selector=label)
         if len(job.items) == 0:
             exist = False
             break
@@ -4976,12 +4788,12 @@ def wait_for_cron_job_delete(batch_v1_api, label="",
     assert not exist
 
 
-def wait_for_cron_job_count(batch_v1_api, number, label="",
+def wait_for_cron_job_count(batch_v1_beta_api, number, label="",
                             retry_counts=RETRY_COUNTS):
     ok = False
     for _ in range(retry_counts):
-        jobs = batch_v1_api.list_namespaced_cron_job('longhorn-system',
-                                                     label_selector=label)
+        jobs = batch_v1_beta_api.list_namespaced_cron_job('longhorn-system',
+                                                          label_selector=label)
         if len(jobs.items) == number:
             ok = True
             break
@@ -5134,117 +4946,7 @@ def restore_backup_and_get_data_checksum(client, core_api, backup, pod,
     return data_checksum, output, restore_pod_name
 
 
-def cleanup_all_support_bundles(client):
-    """
-    Clean up all support bundles
-    :param client: The Longhorn client to use in the request.
-    """
-    longhorn_version = client.by_id_setting('current-longhorn-version').value
-    version_doesnt_have_support_bundle_manager = ['v1.1', 'v1.2', 'v1.3']
-    if any(_version in longhorn_version for
-           _version in version_doesnt_have_support_bundle_manager):
-        print(f'{longhorn_version} doesn\'t have support bundle manager')
-        return
-
-    support_bundles = client.list_support_bundle()
-    for support_bundle in support_bundles:
-        id = support_bundle['id']
-        name = support_bundle['name']
-        # ignore the error when clean up
-        try:
-            delete_support_bundle(id, name, client)
-        except Exception as e:
-            print("\nException when cleanup support_bundle ", support_bundle)
-            print(e)
-
-    ok = False
-    for _ in range(RETRY_COUNTS):
-        support_bundles = client.list_support_bundle()
-        if len(support_bundles) == 0:
-            ok = True
-            break
-        time.sleep(RETRY_INTERVAL)
-    assert ok
-
-
-def check_all_support_bundle_managers_deleted():
-    apps_api = get_apps_api_client()
-    deployments = get_all_support_bundle_manager_deployments(apps_api)
-    for support_bundle_manager in deployments:
-        wait_delete_deployment(apps_api, support_bundle_manager.metadata.name,
-                               namespace=LONGHORN_NAMESPACE)
-
-    assert len(get_all_support_bundle_manager_deployments(apps_api)) == 0
-
-
-def create_support_bundle(client):  # NOQA
-    data = {'description': 'Test', 'issueURL': ""}
-    return requests.post(get_support_bundle_url(client), json=data).json()
-
-
-def delete_support_bundle(node_id, name, client):
-    url = get_support_bundle_url(client)
-    support_bundle_url = '{}/{}/{}'.format(url, node_id, name)
-    return requests.delete(support_bundle_url)
-
-
-def download_support_bundle(node_id, name, client):  # NOQA
-    url = get_support_bundle_url(client)
-    support_bundle_url = '{}/{}/{}'.format(url, node_id, name)
-    download_url = '{}/download'.format(support_bundle_url)
-    r = requests.get(download_url, allow_redirects=True, timeout=300)
-    r.raise_for_status()
-
-
-def get_all_support_bundle_manager_deployments(apps_api):  # NOQA
-    name_prefix = 'longhorn-support-bundle-manager'
-    support_bundle_managers = []
-
-    deployments = apps_api.list_namespaced_deployment(LONGHORN_NAMESPACE)
-    for deployment in deployments.items:
-        if deployment.metadata.name.startswith(name_prefix):
-            support_bundle_managers.append(deployment)
-
-    return support_bundle_managers
-
-
-def get_support_bundle_url(client):  # NOQA
-    return client._url.replace('schemas', 'supportbundles')
-
-
-def get_support_bundle(node_id, name, client):  # NOQA
-    url = get_support_bundle_url(client)
-    support_bundle_url = '{}/{}/{}'.format(url, node_id, name)
-    return requests.get(support_bundle_url).json()
-
-
-def wait_for_support_bundle_cleanup(client):  # NOQA
-    ok = False
-    for _ in range(RETRY_COUNTS):
-        support_bundles = client.list_support_bundle()
-        if len(support_bundles) == 0:
-            ok = True
-            break
-
-        time.sleep(RETRY_INTERVAL)
-    assert ok
-
-
-def wait_for_support_bundle_state(state, node_id, name, client):  # NOQA
-    ok = False
-    for _ in range(RETRY_COUNTS):
-        support_bundle = get_support_bundle(node_id, name, client)
-        try:
-            assert support_bundle['state'] == state
-            ok = True
-            break
-        except Exception:
-            time.sleep(RETRY_INTERVAL)
-
-    assert ok
-
-
-def generate_support_bundle(case_name):  # NOQA
+def generate_support_bundle(case_name):
     """
         Generate support bundle into folder ./support_bundle/case_name.zip
 
@@ -5264,11 +4966,10 @@ def generate_support_bundle(case_name):  # NOQA
 
     # Use API gen support bundle
     client = get_longhorn_api_client()
-    cleanup_all_support_bundles(client)
-
     url = client._url.replace('schemas', 'supportbundles')
     data = {'description': case_name, 'issueURL': case_name}
     res = requests.post(url, json=data).json()
+
     id = res['id']
     name = res['name']
 
@@ -5440,20 +5141,20 @@ def enable_default_disk(client):
     update_node_disks(client, node.name, disks=disks, retry=True)
 
 
-def wait_for_backing_image_status(client, backing_img_name, image_status):
+def wait_for_backing_image_ready(client, backing_img_name):
 
     for i in range(RETRY_EXEC_COUNTS):
         backing_image = client.by_id_backing_image(backing_img_name)
         try:
             for _, status in iter(backing_image.diskFileStatusMap.items()):
-                assert status.state == image_status
+                assert status.state == "ready"
             break
         except Exception as e:
             print(e)
             time.sleep(RETRY_INTERVAL)
 
     for _, status in iter(backing_image.diskFileStatusMap.items()):
-        assert status.state == image_status
+        assert status.state == "ready"
 
 
 def wait_for_backing_image_in_disk_fail(client, backing_img_name, disk_uuid):
@@ -5495,106 +5196,3 @@ def create_volume_and_write_data(client, volume_name, volume_size=SIZE):
     volume_data = write_volume_random_data(volume)
 
     return volume, volume_data
-
-
-def system_backups_cleanup(client):
-    """
-    Clean up all system backups
-    :param client: The Longhorn client to use in the request.
-    """
-
-    system_backups = client.list_system_backup()
-    for system_backup in system_backups:
-        # ignore the error when clean up
-        try:
-            client.delete(system_backup)
-        except Exception as e:
-            name = system_backup['name']
-            print("\nException when cleanup system backup ", name)
-            print(e)
-
-    ok = False
-    for _ in range(RETRY_COUNTS):
-        system_backups = client.list_system_backup()
-        if len(system_backups) == 0:
-            ok = True
-            break
-        time.sleep(RETRY_INTERVAL)
-    assert ok
-
-
-def system_backup_random_name():
-    return "test-system-backup-" + \
-        ''.join(random.choice(string.ascii_lowercase + string.digits)
-                for _ in range(6))
-
-
-def system_backup_wait_for_state(state, name, client):  # NOQA
-    ok = False
-    for _ in range(RETRY_COUNTS):
-        try:
-            system_backup = client.by_id_system_backup(name)
-            assert system_backup.state == state
-            ok = True
-            break
-        except Exception:
-            time.sleep(RETRY_INTERVAL)
-
-    assert ok
-
-
-def system_restores_cleanup(client):
-    """
-    Clean up all system restores
-    :param client: The Longhorn client to use in the request.
-    """
-
-    system_restores = client.list_system_restore()
-    for system_restore in system_restores:
-        # ignore the error when clean up
-        try:
-            client.delete(system_restore)
-        except Exception as e:
-            name = system_restore['name']
-            print("\nException when cleanup system restore ", name)
-            print(e)
-
-    ok = False
-    for _ in range(RETRY_COUNTS):
-        system_restores = client.list_system_restore()
-        if len(system_restores) == 0:
-            ok = True
-            break
-        time.sleep(RETRY_INTERVAL)
-    assert ok
-
-
-def system_restore_random_name():
-    return "test-system-restore-" + \
-        ''.join(random.choice(string.ascii_lowercase + string.digits)
-                for _ in range(6))
-
-
-def system_restore_wait_for_state(state, name, client):  # NOQA
-    ok = False
-    for _ in range(RETRY_COUNTS):
-        system_restore = client.by_id_system_restore(name)
-        try:
-            system_restore = client.by_id_system_restore(name)
-            assert system_restore.state == state
-            ok = True
-            break
-        except Exception:
-            time.sleep(RETRY_INTERVAL_LONG)
-
-    assert ok
-
-
-def get_engine_host_id(client, vol_name):
-    volume = client.by_id_volume(vol_name)
-
-    engines = volume.controllers
-    if len(engines) != 1:
-        return
-
-    return engines[0].hostId

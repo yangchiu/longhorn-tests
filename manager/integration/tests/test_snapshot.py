@@ -280,13 +280,9 @@ def test_snapshot_hash_detect_corruption_in_global_fast_check_mode(client, volum
 
 
 def prepare_settings_for_snapshot_test(client, data_integrity, immediate_check, fast_replica_rebuild, period_in_second=SNAPSHOT_CHECK_PERIOD):  # NOQA
-    period_in_minute = period_in_second / 60
-    # Make the next hash time more predictable
-    now = datetime.datetime.now()
-    minute = (now.minute + period_in_minute) % 60
-    hour = (now.hour + (now.minute + period_in_minute) / 60) % 24
 
-    cronjob = "%d/%d %d * * *" % (minute, period_in_minute, hour)
+    period_in_minute = period_in_second / 60
+    cronjob = f"*/{period_in_minute} * * * *"
 
     update_setting(client,
                    SETTING_SNAPSHOT_DATA_INTEGRITY,

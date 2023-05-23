@@ -4471,6 +4471,7 @@ def make_deployment_cpu_request(request):
         return make_deployment_cpu_request.deployment_manifest
 
     def finalizer():
+        print("exec fixture finalizer: delete deployment")
         apps_api = get_apps_api_client()
         deployment_name = \
             make_deployment_cpu_request.deployment_manifest["metadata"]["name"]
@@ -5473,7 +5474,13 @@ def generate_support_bundle(case_name):  # NOQA
 
     url = client._url.replace('schemas', 'supportbundles')
     data = {'description': case_name, 'issueURL': case_name}
-    res = requests.post(url, json=data).json()
+    try:
+        res_raw = requests.post(url, json=data)
+        res_raw.raise_for_status()
+        res = res_raw.json()
+    except Exception as e:
+        warnings.warn(f"Error while generating support bundle: {e}")
+        return
     id = res['id']
     name = res['name']
 

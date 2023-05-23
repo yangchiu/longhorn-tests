@@ -3,6 +3,7 @@ import pytest
 import math
 import requests
 import time
+import subprocess
 
 from common import apps_api  # NOQA
 from common import client  # NOQA
@@ -45,7 +46,6 @@ from common import SETTING_REPLICA_REPLENISHMENT_WAIT_INTERVAL
 CPU_REQUEST = 150
 
 
-@pytest.mark.skip(reason="require K8s cluster-autoscaler")
 @pytest.mark.cluster_autoscaler  # NOQA
 def test_cluster_autoscaler(client, core_api, apps_api, make_deployment_cpu_request, request):  # NOQA
     """
@@ -65,6 +65,7 @@ def test_cluster_autoscaler(client, core_api, apps_api, make_deployment_cpu_requ
     """
     # Cleanup
     def finalizer():
+        print("exec test case finalizer: configure_node_scale_down")
         configure_node_scale_down(core_api, client.list_node(), disable="")
     request.addfinalizer(finalizer)
 
@@ -102,7 +103,6 @@ def test_cluster_autoscaler(client, core_api, apps_api, make_deployment_cpu_requ
     client = wait_cluster_autoscale_down(client, core_api, nodes, scale_size)
 
 
-@pytest.mark.skip(reason="require K8s cluster-autoscaler")
 @pytest.mark.cluster_autoscaler  # NOQA
 def test_cluster_autoscaler_all_nodes_with_volume_replicas(client, core_api, apps_api, make_deployment_cpu_request, volume_name, pod_make, request):  # NOQA
     """
@@ -212,7 +212,6 @@ def test_cluster_autoscaler_all_nodes_with_volume_replicas(client, core_api, app
     assert resp == data
 
 
-@pytest.mark.skip(reason="require K8s cluster-autoscaler")
 @pytest.mark.cluster_autoscaler  # NOQA
 @pytest.mark.backing_image  # NOQA
 def test_cluster_autoscaler_backing_image(client, core_api, apps_api, make_deployment_cpu_request, request):  # NOQA
@@ -349,13 +348,25 @@ def get_replica_count_to_scale_up(core_api, node_number, cpu_request):  # NOQA
 
 
 def wait_cluster_autoscale_up(client, nodes, diff):  # NOQA
+    print("wait_cluster_autoscale_up ---")
     for _ in range(RETRY_AUTOSCALER_COUNTS):
         time.sleep(RETRY_AUTOSCALER_INTERVAL)
         check_nodes = client.list_node()
+        print(f"=== loop {_} ===")
+        p = str(subprocess.check_output(f"kubectl get pods", shell=True))
+        print(f"pods status =====>")
+        print(p)
+        print(f"nodes status =====>")
+        for n in check_nodes:
+            out = str(subprocess.check_output(f"kubectl describe node {n.name} | grep -e \"cpu[^:]\"", shell=True))
+            print(f"node {n.name}: {out}")
+        print(f"================")
         added = len(check_nodes) - len(nodes)
         if added >= diff:
+            print(f"success: len(check_nodes) = {len(check_nodes)}, len(nodes) = {len(nodes)}, added = {added}, diff = {diff}")
             return
 
+    print(f"failed: len(check_nodes) = {len(check_nodes)}, len(nodes) = {len(nodes)}, added = {added}, diff = {diff}")
     assert False, \
         f"cluster autoscaler failed to scaled up.\n" \
         f"Expect scale={diff}\n" \
@@ -363,6 +374,7 @@ def wait_cluster_autoscale_up(client, nodes, diff):  # NOQA
 
 
 def wait_cluster_autoscale_down(client, core_api, nodes, diff):  # NOQA
+    print("wait_cluster_autoscale_down ---")
     for _ in range(RETRY_AUTOSCALER_COUNTS):
         time.sleep(RETRY_AUTOSCALER_INTERVAL)
 
@@ -374,10 +386,17 @@ def wait_cluster_autoscale_down(client, core_api, nodes, diff):  # NOQA
         except requests.exceptions.ConnectionError:
             client = get_longhorn_api_client()
             continue
-
+        print(f"nodes status =====>")
+        for n in check_nodes:
+            out = str(subprocess.check_output(f"kubectl describe node {n.name} | grep -e \"cpu[^:]\"", shell=True))
+            print(f"node {n.name}: {out}")
+        print(f"================")
         removed = len(nodes) - len(check_nodes)
         if removed >= diff:
+            print(f"success: len(check_nodes) = {len(check_nodes)}, len(nodes) = {len(nodes)}, removed = {removed}, diff = {diff}")
             return client
+
+    print(f"failed: len(check_nodes) = {len(check_nodes)}, len(nodes) = {len(nodes)}, removed = {removed}, diff = {diff}")
 
     assert False, \
         f"cluster autoscaler failed to scaled down.\n" \

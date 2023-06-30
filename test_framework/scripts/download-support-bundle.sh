@@ -45,6 +45,8 @@ SUPPORT_BUNDLE_URL=`kubectl exec -n longhorn-system svc/longhorn-frontend -- bas
 
 SUPPORT_BUNDLE_READY=false
 while [[ ${SUPPORT_BUNDLE_READY} == false ]]; do
+    echo ${SUPPORT_BUNDLE_URL}
+    echo `kubectl exec -n longhorn-system svc/longhorn-frontend -- curl -H 'Accept: application/json' ${SUPPORT_BUNDLE_URL}`
     PERCENT=`kubectl exec -n longhorn-system svc/longhorn-frontend -- curl -H 'Accept: application/json' ${SUPPORT_BUNDLE_URL} | jq -r '.progressPercentage' || true`
     echo ${PERCENT}
     

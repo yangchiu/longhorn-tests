@@ -441,9 +441,10 @@ main(){
   create_aws_secret
   set -x
 
+  install_iscsi
+
   if [[ ${TF_VAR_k8s_distro_name} == "eks" ]]; then
     create_admin_service_account
-    install_iscsi
     install_cluster_autoscaler
   fi
   create_longhorn_namespace

@@ -138,7 +138,7 @@ install_longhorn_by_rancher() {
 
 
 wait_longhorn_status_running(){
-  local RETRY_COUNTS=10 # in minutes
+  local RETRY_COUNTS=86400 # in minutes
   local RETRY_INTERVAL="1m"
 
   # csi components are installed after longhorn components.

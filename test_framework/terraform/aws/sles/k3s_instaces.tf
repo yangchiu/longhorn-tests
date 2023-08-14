@@ -47,9 +47,11 @@ resource "aws_instance" "lh_aws_instance_worker_k3s" {
   ami           = data.aws_ami.aws_ami_sles.id
   instance_type = var.lh_aws_instance_type_worker
 
-  subnet_id = aws_subnet.lh_aws_private_subnet.id
+  associate_public_ip_address = true
+
+  subnet_id = aws_subnet.lh_aws_public_subnet.id
   vpc_security_group_ids = [
-    aws_security_group.lh_aws_secgrp_worker.id
+    aws_security_group.lh_aws_secgrp_controlplane.id
   ]
 
   root_block_device {

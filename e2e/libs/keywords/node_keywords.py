@@ -20,3 +20,6 @@ class node_keywords:
         volume_keywords = BuiltIn().get_library_instance('volume_keywords')
         volume_not_attached_node = volume_keywords.get_volume_not_attached_node(volume_name)
         self.node.reboot_node(test_pod_running_node, volume_not_attached_node)
+
+    def restart_all_nodes(self):
+        self.node.restart_all_nodes()

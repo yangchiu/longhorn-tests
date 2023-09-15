@@ -38,7 +38,7 @@ class Node:
             mapping = yaml.safe_load(f)
             reboot_node_id = mapping[reboot_node_name]
 
-        filepath = './litmus/reboot-engine.yaml'
+        filepath = './templates/litmus/reboot-engine.yaml'
         with open(filepath, 'r') as f:
             data = yaml.safe_load(f)
             data['spec']['components']['runner']['nodeSelector']['kubernetes.io/hostname'] = running_on_node_name

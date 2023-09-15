@@ -5,7 +5,7 @@ Resource    ../keywords/node.resource
 Resource    ../keywords/common.resource
 
 Test Setup    Set test environment
-Test Teardown    Cleanup resources
+Test Teardown    Cleanup test resources
 
 *** Variables ***
 ${LOOP_COUNT}    1

@@ -3,7 +3,7 @@ from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 import time
 import yaml
-import logging
+from utility.utility import logging
 
 RETRY_COUNTS = 150
 RETRY_INTERVAL = 1
@@ -31,7 +31,7 @@ def create_storageclass(name):
         try:
             api.create_storage_class(body=manifest_dict)
         except Exception as e:
-            print(f"Exception when create storageclass: {e}")
+            logging(f"Creating storageclass error: {e}")
 
 def delete_storageclass(name):
     api = client.StorageV1Api()
@@ -58,7 +58,6 @@ def create_deployment(volume_type, option):
             deployment = api.create_namespaced_deployment(
                 namespace=namespace,
                 body=manifest_dict)
-            print(deployment)
 
             deployment_name = deployment.metadata.name
             replicas = deployment.spec.replicas
@@ -76,7 +75,7 @@ def create_deployment(volume_type, option):
             assert deployment.status.ready_replicas == replicas
 
         except Exception as e:
-            print(f"Exception when create deployment: {e}")
+            logging(f"Creating deployment error: {e}")
     return deployment_name
 
 def delete_deployment(name, namespace='default'):
@@ -141,7 +140,7 @@ def create_statefulset(volume_type, option):
             assert statefulset.status.ready_replicas == replicas
 
         except Exception as e:
-            print(f"Exception when create statefulset: {e}")
+            logging(f"Creating statefulset error: {e}")
     return statefulset_name
 
 def delete_statefulset(name, namespace='default'):
@@ -187,7 +186,7 @@ def create_pvc(volume_type, option):
                 body=manifest_dict,
                 namespace=namespace)
         except Exception as e:
-            print(f"Exception when create pvc: {e}")
+            logging(f"Creating pvc error: {e}")
     return pvc.metadata.name
 
 def delete_pvc(name, namespace='default'):
@@ -241,7 +240,7 @@ def get_workload_volume_name(workload_name):
 def get_workload_pvc_name(workload_name):
     api = client.CoreV1Api()
     pod = get_workload_pods(workload_name)[0]
-    print(f"pod = {pod}")
+    logging(f"Got pod {pod.metadata.name} for workload {workload_name}")
     for volume in pod.spec.volumes:
         if volume.name == 'pod-data':
             pvc_name = volume.persistent_volume_claim.claim_name
@@ -269,12 +268,12 @@ def keep_writing_pod_data(pod_name, size_in_mb=256, path="/data/overwritten-data
         '-c',
         f"while true; do dd if=/dev/urandom of={path} bs=1M count={size_in_mb} status=none; done > /dev/null 2> /dev/null &"
     ]
-    logging.warn("before keep_writing_pod_data")
+    logging(f"Keep writing pod {pod_name}")
     res = stream(
         api.connect_get_namespaced_pod_exec, pod_name, 'default',
         command=write_cmd, stderr=True, stdin=False, stdout=True,
         tty=False)
-    logging.warn("keep_writing_pod_data return")
+    logging(f"Created process to keep writing pod {pod_name}")
     return res
 
 def check_pod_data(pod_name, checksum, path="/data/random-data"):
@@ -288,7 +287,7 @@ def check_pod_data(pod_name, checksum, path="/data/random-data"):
         api.connect_get_namespaced_pod_exec, pod_name, 'default',
         command=cmd, stderr=True, stdin=False, stdout=True,
         tty=False)
-    print(f"get {path} checksum = {_checksum},\
+    logging(f"Got {path} checksum = {_checksum},\
                 expected checksum = {checksum}")
     assert _checksum == checksum
 
@@ -296,6 +295,7 @@ def wait_for_workload_pod_stable(workload_name):
     stable_pod = None
     wait_for_stable_retry = 0
     for _ in range(POD_WAIT_TIMEOUT):
+        logging(f"Waiting for {workload_name} pod stable ({_}) ...")
         pods = get_workload_pods(workload_name)
         for pod in pods:
             if pod.status.phase == "Running":

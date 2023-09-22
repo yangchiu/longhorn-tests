@@ -1,10 +1,9 @@
 from workload.workload import *
-import logging
 
 class workload_keywords:
 
     def __init__(self):
-        logging.warn("initialize workload_keywords class")
+        pass
 
     def init_storageclasses(self):
         create_storageclass('longhorn-test')
@@ -36,7 +35,6 @@ class workload_keywords:
         return write_pod_random_data(pod, size_in_mb)
 
     def check_pod_data(self, pod_name, checksum):
-        print(f"check pod {pod_name} data with checksum {checksum}")
         check_pod_data(pod_name, checksum)
 
     def cleanup_deployments(self, deployment_names):

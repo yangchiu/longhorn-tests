@@ -11,6 +11,13 @@ POD_WAIT_INTERVAL = 1
 POD_WAIT_TIMEOUT = 240
 WAIT_FOR_POD_STABLE_MAX_RETRY = 90
 
+def get_name_suffix(*args):
+    suffix = ""
+    for arg in args:
+        if arg:
+            suffix += f"-{arg}"
+    return suffix
+
 def create_storageclass(name):
     if name == 'strict-local':
         filepath = "./templates/workload/strict_local_storageclass.yaml"
@@ -38,9 +45,7 @@ def create_deployment(volume_type, option):
     with open(filepath, 'r') as f:
         namespace = 'default'
         manifest_dict = yaml.safe_load(f)
-        suffix = f"-{volume_type}"
-        if option:
-            suffix += f"-{option}"
+        suffix = get_name_suffix(volume_type, option)
         # correct workload name
         manifest_dict['metadata']['name'] += suffix
         manifest_dict['metadata']['labels']['app'] += suffix
@@ -102,9 +107,7 @@ def create_statefulset(volume_type, option):
     with open(filepath, 'r') as f:
         namespace = 'default'
         manifest_dict = yaml.safe_load(f)
-        suffix = f"-{volume_type}"
-        if option:
-            suffix += f"-{option}"
+        suffix = get_name_suffix(volume_type, option)
         # correct workload name
         manifest_dict['metadata']['name'] += suffix
         manifest_dict['spec']['selector']['matchLabels']['app'] += suffix
@@ -169,9 +172,7 @@ def create_pvc(volume_type, option):
     with open(filepath, 'r') as f:
         namespace = 'default'
         manifest_dict = yaml.safe_load(f)
-        suffix = f"-{volume_type}"
-        if option:
-            suffix += f"-{option}"
+        suffix = get_name_suffix(volume_type, option)
         # correct pvc name
         manifest_dict['metadata']['name'] += suffix
         # correct storageclass name
@@ -231,7 +232,8 @@ def get_workload_pods(workload_name):
     return resp.items
 
 def get_workload_volume_name(workload_name):
-    get_workload_pvc_name(workload_name)
+    api = client.CoreV1Api()
+    pvc_name = get_workload_pvc_name(workload_name)
     pvc = api.read_namespaced_persistent_volume_claim(
         name=pvc_name, namespace='default')
     return pvc.spec.volume_name

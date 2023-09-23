@@ -42,6 +42,8 @@ node {
             notifyBuild('STARTED', BUILD_TRIGGER_BY, params.NOTIFY_SLACK_CHANNEL)
         }
 
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+
         checkout scm
 
         try {

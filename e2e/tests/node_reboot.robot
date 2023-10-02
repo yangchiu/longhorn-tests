@@ -10,6 +10,7 @@ Test Teardown    Cleanup test resources
 
 *** Variables ***
 ${LOOP_COUNT}    1
+${LATENCY_IN_MS}    0
 
 *** Test Cases ***
 Reboot Node One By One While Workload Heavy Writing

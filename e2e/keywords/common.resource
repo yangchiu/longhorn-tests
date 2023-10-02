@@ -5,6 +5,7 @@ Library             ../libs/keywords/common_keywords.py
 Library             ../libs/keywords/volume_keywords.py
 Library             ../libs/keywords/recurring_job_keywords.py
 Library             ../libs/keywords/workload_keywords.py
+Library             ../libs/keywords/network_keywords.py
 
 
 *** Variables ***
@@ -21,8 +22,10 @@ Set test environment
     Set Test Variable    ${deployment_list}
     @{statefulset_list} =    Create List
     Set Test Variable    ${statefulset_list}
+    inject_control_plane_network_latency
 
 Cleanup test resources
+    recover_control_plane_network
     cleanup_node_exec
     cleanup_recurring_jobs    ${volume_list}
     cleanup_volumes    ${volume_list}

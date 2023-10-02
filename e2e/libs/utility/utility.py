@@ -41,6 +41,14 @@ def list_nodes():
             nodes.append(item.metadata.name)
     return sorted(nodes)
 
+def get_control_plane_node():
+    core_api = client.CoreV1Api()
+    obj = core_api.list_node()
+    for item in obj.items:
+        if 'node-role.kubernetes.io/control-plane' in item.metadata.labels or \
+                'node-role.kubernetes.io/master' in item.metadata.labels:
+            return item.metadata.name
+
 def wait_for_cluster_ready():
     core_api = client.CoreV1Api()
     for i in range(RETRY_COUNTS):

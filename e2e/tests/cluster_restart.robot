@@ -9,6 +9,7 @@ Test Teardown    Cleanup test resources
 
 *** Variables ***
 ${LOOP_COUNT}    1
+${LATENCY_IN_MS}    0
 
 *** Test Cases ***
 Restart Cluster While Workload Heavy Writing

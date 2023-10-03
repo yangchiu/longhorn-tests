@@ -1,0 +1,15 @@
+*** Settings ***
+Documentation       Common keywords
+
+Library             ../libs/keywords/network_keywords.py
+Library             ../libs/keywords/workload_keywords.py
+Library             ../libs/keywords/volume_keywords.py
+
+*** Variables ***
+
+
+*** Keywords ***
+Disconnect volume node network of statefulset ${idx} for ${disconnection_time_in_sec} seconds
+    ${volume_name} =    get_workload_volume_name    ${statefulset_list}[${idx}]
+    ${node_name} =    get_volume_node    ${volume_name}
+    disconnect_node_network    ${node_name}    ${disconnection_time_in_sec}

@@ -86,5 +86,11 @@ class volume_keywords:
     def wait_for_volume_healthy(self, volume_name):
         self.volume.wait_for_volume_healthy(volume_name)
 
+    def wait_for_volume_degraded(self, volume_name):
+        self.volume.wait_for_volume_degraded(volume_name)
+
+    def wait_for_volume_unknown(self, volume_name):
+        self.volume.wait_for_volume_unknown(volume_name)
+
     def cleanup_volumes(self, volume_names):
         self.volume.cleanup(volume_names)

@@ -171,6 +171,7 @@ class CRD(Base):
         checksum = self.node_exec.issue_cmd(
             node_name,
             f"dd if=/dev/urandom of={endpoint} bs=1M count={size} status=none;\
+              sync;\
               md5sum {endpoint} | awk \'{{print $1}}\'")
         return checksum
 

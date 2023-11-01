@@ -9,7 +9,7 @@ from utility.utility import get_retry_count_and_interval
 from utility.utility import logging
 
 
-WAIT_FOR_POD_STABLE_MAX_RETRY = 90
+WAIT_FOR_POD_STABLE_MAX_RETRY = 120
 
 def get_name_suffix(*args):
     suffix = ""
@@ -251,6 +251,7 @@ def write_pod_random_data(pod_name, size_in_mb, path="/data/random-data"):
         '/bin/sh',
         '-c',
         f"dd if=/dev/urandom of={path} bs=1M count={size_in_mb} status=none;\
+          sync;\
           md5sum {path} | awk \'{{print $1}}\'"
     ]
     return stream(

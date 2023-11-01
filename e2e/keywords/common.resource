@@ -34,3 +34,6 @@ Cleanup test resources
     cleanup_deployments    ${deployment_list}
     cleanup_statefulsets    ${statefulset_list}
     cleanup_storageclasses
+
+Set ${setting_name} to ${setting_value}
+    change_setting    ${setting_name}    ${setting_value}

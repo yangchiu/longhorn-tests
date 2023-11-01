@@ -74,3 +74,12 @@ Wait until replica on replica node rebuilt
 Wait for volume of statefulset ${idx} healthy
     ${volume_name} =    get_workload_volume_name    ${statefulset_list}[${idx}]
     wait_for_volume_healthy    ${volume_name}
+
+Wait for volume attached and degraded
+    wait_for_volume_degraded    ${volume_name}
+
+Wait for volume attached and unknown
+    wait_for_volume_unknown    ${volume_name}
+
+Wait for volume attached and healthy
+    wait_for_volume_healthy    ${volume_name}

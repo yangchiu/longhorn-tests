@@ -25,3 +25,24 @@ During replica rebuilding, delete replica node
 
 Add deleted node back
     reboot_node_by_name    ${deleted_node}
+
+Force Drain volume node
+    ${drained_node} =    get_volume_node    ${volume_name}
+    # cannot delete Pods not managed by ReplicationController, ReplicaSet, Job, DaemonSet or StatefulSet
+    # (use --force to override): longhorn-system/longhorn-test-nfs, longhorn-system/longhorn-test-minio
+    force_drain_node    ${drained_node}
+    wait_for_all_pods_evicted    ${drained_node}
+    Set Test Variable    ${drained_node}
+
+Uncordon volume node
+    uncordon_node    ${drained_node}
+
+Force Drain replica node
+    ${drained_node} =    get_replica_node    ${volume_name}
+    force_drain_node    ${drained_node}
+    wait_for_all_pods_evicted    ${drained_node}
+    Set Test Variable    ${drained_node}
+
+Uncordon replica node
+    ${drained_node} =    get_replica_node    ${volume_name}
+    uncordon_node    ${drained_node}

@@ -70,6 +70,36 @@ Delete Replica Node While Replica Rebuilding
         And Check deployment data is intact
     END
 
+Force Drain Volume Node While Replica Rebuilding
+    And Create deployment with rwo volume
+    And Write 2048 MB data to deployment
+
+    FOR    ${i}    IN RANGE    ${LOOP_COUNT}
+        When Delete replica on volume node to trigger replica rebuilding
+        And Force Drain volume node
+
+        Then Wait for volume attached and degraded
+        And Uncordon volume node
+        And Wait for volume attached and healthy
+        And Wait for deployment stable
+        And Check deployment data is intact
+    END
+
+Force Drain Replica Node While Replica Rebuilding
+    And Create deployment with rwo volume
+    And Write 2048 MB data to deployment
+
+    FOR    ${i}    IN RANGE    ${LOOP_COUNT}
+        When Delete replica on replica node to trigger replica rebuilding
+        And Force Drain replica node
+
+        Then Wait for volume attached and degraded
+        And Uncordon replica node
+        And Wait for volume attached and healthy
+        And Wait for deployment stable
+        And Check deployment data is intact
+    END
+
 Stress Volume Node CPU While Replica Rebuilding
     Given Create a volume with 5 GB and 3 replicas
     And Write data to the volume

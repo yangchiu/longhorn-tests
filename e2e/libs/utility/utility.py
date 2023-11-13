@@ -4,6 +4,7 @@ import string
 import time
 import random
 import yaml
+import subprocess
 
 from longhorn import from_env
 
@@ -65,6 +66,11 @@ def get_control_plane_nodes():
                 'node-role.kubernetes.io/master' in item.metadata.labels:
             nodes.append(item.metadata.name)
     return sorted(nodes)
+
+def subprocess_exec_cmd(cmd):
+    res = subprocess.check_output(cmd)
+    logging(f"Executed command {cmd} with result {res}")
+    return res
 
 def wait_for_cluster_ready():
     core_api = client.CoreV1Api()

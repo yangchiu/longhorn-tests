@@ -8,8 +8,7 @@ elif [[  ${selinux_mode} == "permissive" ]]; then
   sudo setenforce  0
 fi
 
-# Do not arbitrarily run "dnf update", as this will effectively move us up to the latest minor release.                                                         
-sudo dnf group install -y "Development Tools"
+# Do not arbitrarily run "dnf update", as this will effectively move us up to the latest minor release.
 sudo dnf install -y iscsi-initiator-utils nfs-utils nfs4-acl-tools jq
 sudo systemctl -q enable iscsid                                                 
 sudo systemctl start iscsid

@@ -10,7 +10,7 @@ elif [[  ${selinux_mode} == "permissive" ]]; then
     sudo setenforce  0
 fi
 
-sudo yum update -y                                                              
+sudo yum update -y
 sudo yum group install -y "Development Tools"
 sudo yum install -y iscsi-initiator-utils nfs-utils nfs4-acl-tools jq
 sudo systemctl -q enable iscsid                                                 

@@ -9,7 +9,6 @@ elif [[  ${selinux_mode} == "permissive" ]]; then
 fi
 
 # Do not arbitrarily run "dnf update", as this will effectively move us up to the latest minor release.
-sudo dnf group install -y "Development Tools"
 sudo dnf install -y iscsi-initiator-utils nfs-utils nfs4-acl-tools
 sudo systemctl -q enable iscsid
 sudo systemctl start iscsid

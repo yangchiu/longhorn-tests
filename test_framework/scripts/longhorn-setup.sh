@@ -121,6 +121,8 @@ wait_longhorn_status_running(){
   local RETRY_COUNTS=10 # in minutes
   local RETRY_INTERVAL="1m"
 
+  kubectl get pods -n longhorn-system -w -owide
+
   # csi and engine image components are installed after longhorn components.
   # it's possible that all longhorn components are running but csi components aren't created yet.
   RETRIES=0

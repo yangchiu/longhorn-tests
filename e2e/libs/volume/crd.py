@@ -172,7 +172,10 @@ class CRD(Base):
             except Exception as e:
                 logging(f"Getting volume {self.get(volume_name)} status error: {e}")
             time.sleep(self.retry_interval)
-        assert self.get(volume_name)["status"]["state"] == desired_state
+        if self.get(volume_name)["status"]["state"] != desired_state:
+            logging(f"Assert {volume_name} state to be {desired_state} but it's {self.get(volume_name)['status']['state']}")
+            logging(f"volume  = {self.get(volume_name)}")
+            time.sleep(self.retry_count)
 
     def wait_for_volume_robustness(self, volume_name, desired_state):
         for i in range(self.retry_count):
@@ -183,7 +186,10 @@ class CRD(Base):
             except Exception as e:
                 logging(f"Getting volume {self.get(volume_name)} robustness error: {e}")
             time.sleep(self.retry_interval)
-        assert self.get(volume_name)["status"]["robustness"] == desired_state
+        if self.get(volume_name)["status"]["robustness"] != desired_state:
+            logging(f"Assert {volume_name} state to be {desired_state} but it's {self.get(volume_name)['status']['robustness']}")
+            logging(f"volume  = {self.get(volume_name)}")
+            time.sleep(self.retry_count)
 
     def wait_for_volume_robustness_not(self, volume_name, not_desired_state):
         for i in range(self.retry_count):

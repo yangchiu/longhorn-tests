@@ -10,4 +10,6 @@ set_kubeconfig(){
   elif [[ ${TF_VAR_k8s_distro_name} == "eks" ]]; then
     export KUBECONFIG="test_framework/eks.yml"
   fi
+
+  cat "${KUBECONFIG}"
 }

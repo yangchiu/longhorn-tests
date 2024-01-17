@@ -12,6 +12,8 @@ set_kubeconfig(){
   elif [[ "${TF_VAR_arch}" == "arm64"  ]]; then
     export KUBECONFIG="${PWD}/test_framework/terraform/${LONGHORN_TEST_CLOUDPROVIDER}/${DISTRO}/k3s.yaml"
   fi
+
+  cat "${KUBECONFIG}"
 }
 
 

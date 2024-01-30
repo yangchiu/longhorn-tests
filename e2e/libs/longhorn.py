@@ -11,6 +11,7 @@ import re
 import requests
 import six
 import time
+from robot.api import logger
 
 from functools import reduce
 
@@ -279,9 +280,11 @@ class GdapiClient(object):
         return self.object_hook(ret)
 
     def _get(self, url, data=None):
+        logger.console(f"_get called with url {url}")
         return self._unmarshall(self._get_raw(url, data=data))
 
     def _error(self, text, status_code):
+        logger.console(f"_error called with text {text}")
         raise ApiError(self._unmarshall(text), status_code)
 
     @timed_url
@@ -299,6 +302,9 @@ class GdapiClient(object):
 
     @timed_url
     def _post(self, url, data=None):
+
+        logger.console(f"_post called with url {url}")
+
         r = self._session.post(url, auth=self._auth, data=self._marshall(data),
                                headers=self._headers)
         if r.status_code < 200 or r.status_code >= 300:
@@ -308,6 +314,9 @@ class GdapiClient(object):
 
     @timed_url
     def _put(self, url, data=None):
+
+        logger.console(f"_put called with url {url}")
+
         r = self._session.put(url, auth=self._auth, data=self._marshall(data),
                               headers=self._headers)
         if r.status_code < 200 or r.status_code >= 300:
@@ -317,6 +326,9 @@ class GdapiClient(object):
 
     @timed_url
     def _delete(self, url):
+
+        logger.console(f"_delete called with url {url}")
+
         r = self._session.delete(url, auth=self._auth, headers=self._headers)
         if r.status_code < 200 or r.status_code >= 300:
             self._error(r.text, r.status_code)
@@ -326,16 +338,29 @@ class GdapiClient(object):
     def _unmarshall(self, text):
         if text is None or text == '':
             return text
-        obj = json.loads(text, object_hook=self.object_hook,
-                         object_pairs_hook=self.object_pairs_hook)
-        return obj
+        try:
+            obj = json.loads(text, object_hook=self.object_hook,
+                             object_pairs_hook=self.object_pairs_hook)
+            return obj
+        except Exception as e:
+            logger.console(f"_unmarshall error: {e}")
+            logger.console(f"text = {text}")
+            #time.sleep(86400 * 3)
+            raise Exception(e)
 
     def _marshall(self, obj, indent=None, sort_keys=False):
         if obj is None:
             return None
-        return json.dumps(self._to_dict(obj), indent=indent, sort_keys=True)
+        try:
+            return json.dumps(self._to_dict(obj), indent=indent, sort_keys=True)
+        except Exception as e:
+            logger.console(f"_marshall error: {e}")
+            logger.console(f"obj = {obj}")
+            #time.sleep(86400 * 3)
+            raise Exception(e)
 
     def _load_schemas(self, force=False):
+        logger.console("_load_schemas called")
         if self.schema and not force:
             return
 
@@ -723,7 +748,13 @@ def _map_load(value):
         return value
 
     if value[0] == '{':
-        return json.loads(value)
+        try:
+            return json.loads(value)
+        except Exception as e:
+            logger.console(f"_map_load error: {e}")
+            logger.console(f"value = {value}")
+            #time.sleep(86400 * 3)
+            raise Exception(e)
     else:
         ret = {}
         for k, v in [x.strip().split('=', 1) for x in value.split(',')]:

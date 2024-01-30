@@ -86,16 +86,19 @@ class Rest(Base):
 
         started = False
         for i in range(RETRY_COUNTS):
-            v = self.longhorn_client.by_id_volume(volume_name)
-            logging(f"Got volume rebuild status = {v.rebuildStatus}")
-            for status in v.rebuildStatus:
-                for replica in v.replicas:
-                    if status.replica == replica.name and \
-                       replica.hostId == node_name and \
-                       status.state == "in_progress":
-                       logging(f"Started {node_name}'s replica {replica.name} rebuilding")
-                       started = True
-                       break
+            try:
+                v = self.longhorn_client.by_id_volume(volume_name)
+                logging(f"Got volume rebuild status = {v.rebuildStatus}")
+                for status in v.rebuildStatus:
+                    for replica in v.replicas:
+                        if status.replica == replica.name and \
+                            replica.hostId == node_name and \
+                            status.state == "in_progress":
+                            logging(f"Started {node_name}'s replica {replica.name} rebuilding")
+                            started = True
+                            break
+            except Exception as e:
+                logging(f"Failed to get volume status {e}")
             if started:
                 break
             time.sleep(RETRY_INTERVAL)

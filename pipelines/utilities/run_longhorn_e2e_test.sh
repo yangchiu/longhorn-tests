@@ -72,7 +72,12 @@ run_longhorn_e2e_test_out_of_cluster(){
 
   eval "ROBOT_COMMAND_ARGS=($PYTEST_CUSTOM_OPTIONS)"
 
-  ./run.sh "${ROBOT_COMMAND_ARGS[@]}"
+  if [[ -n ${LONGHORN_TESTS_CUSTOM_IMAGE} ]]; then
+    mkdir /tmp/test-report
+    docker run --name e2e -e AWS_ACCESS_KEY_ID="${TF_VAR_lh_aws_access_key}" -e AWS_SECRET_ACCESS_KEY="${TF_VAR_lh_aws_secret_key}" -e AWS_DEFAULT_REGION="${TF_VAR_aws_region}" -e LONGHORN_CLIENT_URL="${LONGHORN_CLIENT_URL}" -v /tmp/test-report:/tmp/test-report -v "${KUBECONFIG}":/root/.kube/config -v /tmp/instance_mapping:/tmp/instance_mapping yangchiu/test-e2e
+  else
+    ./run.sh "${ROBOT_COMMAND_ARGS[@]}"
+  fi
 
   cp /tmp/test-report/log.html "${WORKSPACE}/log.html"
   cp /tmp/test-report/output.xml "${WORKSPACE}/output.xml"

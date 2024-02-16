@@ -80,6 +80,7 @@ from common import SETTING_RECURRING_JOB_WHILE_VOLUME_DETACHED
 from common import SIZE, Mi, Gi
 from common import SETTING_RESTORE_RECURRING_JOBS
 from common import VOLUME_HEAD_NAME
+from common import RETRY_COUNTS_LONG
 
 
 RECURRING_JOB_LABEL = "RecurringJob"
@@ -904,7 +905,7 @@ def test_recurring_jobs_when_volume_detached_unexpectedly(set_random_backupstore
 
     crash_engine_process_with_sigkill(client, core_api, volume_name)
     time.sleep(10)
-    wait_for_volume_healthy_no_frontend(client, volume_name)
+    wait_for_volume_healthy_no_frontend(client, volume_name, RETRY_COUNTS_LONG)
 
     # Since the backup state is removed after the backup complete and it
     # could happen quickly. Checking for the both in-progress and complete

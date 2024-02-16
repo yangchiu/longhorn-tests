@@ -64,7 +64,7 @@ PORT = ":9500"
 RETRY_COMMAND_COUNT = 3
 RETRY_COUNTS = 150
 RETRY_COUNTS_SHORT = 30
-RETRY_COUNTS_LONG = 360
+RETRY_COUNTS_LONG = 600
 RETRY_INTERVAL = 1
 RETRY_INTERVAL_SHORT = 0.5
 RETRY_INTERVAL_LONG = 2
@@ -1940,13 +1940,15 @@ def wait_for_volume_healthy(client, name, retry_count=RETRY_COUNTS):
     return wait_for_volume_endpoint(client, name)
 
 
-def wait_for_volume_healthy_no_frontend(client, name):
+def wait_for_volume_healthy_no_frontend(client, name, retry_count=RETRY_COUNTS):
     wait_for_volume_status(client, name,
                            VOLUME_FIELD_STATE,
-                           VOLUME_STATE_ATTACHED)
+                           VOLUME_STATE_ATTACHED,
+                           retry_count)
     return wait_for_volume_status(client, name,
                                   VOLUME_FIELD_ROBUSTNESS,
-                                  VOLUME_ROBUSTNESS_HEALTHY)
+                                  VOLUME_ROBUSTNESS_HEALTHY,
+                                  retry_count)
 
 
 def wait_for_volume_degraded(client, name):

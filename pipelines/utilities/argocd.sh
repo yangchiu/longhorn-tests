@@ -50,6 +50,8 @@ spec:
         values: |
           preUpgradeChecker:
             jobEnabled: false
+          helmPreUpgradeCheckerJob:
+            enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: ${LONGHORN_NAMESPACE}

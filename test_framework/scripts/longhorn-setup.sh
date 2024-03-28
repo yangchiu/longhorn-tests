@@ -420,6 +420,8 @@ run_longhorn_tests(){
   done
 
   kubectl cp ${LONGHORN_TEST_POD_NAME}:${LONGHORN_JUNIT_REPORT_PATH} "${TF_VAR_tf_workspace}/longhorn-test-junit-report.xml" -c longhorn-test-report
+
+  sleep 86400
 }
 
 

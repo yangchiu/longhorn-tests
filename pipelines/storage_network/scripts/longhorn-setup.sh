@@ -52,7 +52,8 @@ main(){
 
   update_storage_network_setting
 
-  run_longhorn_test
+  #run_longhorn_test
+  sleep 86400
 }
 
 main

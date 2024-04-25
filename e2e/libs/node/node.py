@@ -3,7 +3,7 @@ import time
 
 from kubernetes import client
 
-from robot.libraries.BuiltIn import BuiltIn
+from volume import Volume
 
 from utility.utility import get_retry_count_and_interval
 
@@ -11,7 +11,7 @@ from utility.utility import get_retry_count_and_interval
 class Node:
 
     def __init__(self):
-        pass
+        self.volume = Volume()
 
     def get_all_pods_on_node(self, node_name):
         api = client.CoreV1Api()
@@ -48,28 +48,14 @@ class Node:
         core_api = client.CoreV1Api()
         return core_api.read_node(node_name)
 
-    def get_test_pod_running_node(self):
-        if "NODE_NAME" in os.environ:
-            return os.environ["NODE_NAME"]
-        else:
-            return self.get_node_by_index(0)
-
-    def get_test_pod_not_running_node(self):
-        worker_nodes = self.list_node_names_by_role("worker")
-        test_pod_running_node = self.get_test_pod_running_node()
-        for worker_node in worker_nodes:
-            if worker_node != test_pod_running_node:
-                return worker_node
-
     def get_node_cpu_cores(self, node_name):
         node = self.get_node_by_name(node_name)
         return node.status.capacity['cpu']
 
     def list_node_names_by_volumes(self, volume_names):
-        volume_keywords = BuiltIn().get_library_instance('volume_keywords')
         volume_nodes = {}
         for volume_name in volume_names:
-            volume_node = volume_keywords.get_node_id_by_replica_locality(volume_name, "volume node")
+            volume_node = self.volume.get_volume_node(volume_name)
             if volume_node not in volume_nodes:
                 volume_nodes[volume_node] = True
         return list(volume_nodes.keys())

@@ -2,7 +2,7 @@ from robot.libraries.BuiltIn import BuiltIn
 
 from host import Host
 from host.constant import NODE_REBOOT_DOWN_TIME_SECOND
-
+from volume import Volume
 from node import Node
 
 from utility.utility import logging
@@ -11,19 +11,18 @@ from utility.utility import logging
 class host_keywords:
 
     def __init__(self):
-        self.volume_keywords = BuiltIn().get_library_instance('volume_keywords')
-
+        self.volume = Volume()
         self.host = Host()
         self.node = Node()
 
     def reboot_volume_node(self, volume_name):
-        node_id = self.volume_keywords.get_node_id_by_replica_locality(volume_name, "volume node")
+        node_id = self.volume.get_volume_node(volume_name)
 
         logging(f'Rebooting volume {volume_name} node {node_id} with downtime {NODE_REBOOT_DOWN_TIME_SECOND} seconds')
         self.host.reboot_node(node_id)
 
     def reboot_replica_node(self, volume_name):
-        node_id = self.volume_keywords.get_node_id_by_replica_locality(volume_name, "replica node")
+        node_id = self.volume.get_replica_node(volume_name)
 
         logging(f'Rebooting volume {volume_name} node {node_id} with downtime {NODE_REBOOT_DOWN_TIME_SECOND} seconds')
         self.host.reboot_node(node_id)

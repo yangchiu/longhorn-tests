@@ -69,10 +69,6 @@ Wait until volume ${volume_id} replica rebuilding completed on ${replica_localit
     ${volume_name} =    generate_name_with_suffix    volume    ${volume_id}
     wait_for_replica_rebuilding_to_complete_on_node    ${volume_name}    ${replica_locality}
 
-Wait until volume ${volume_id} replicas rebuilding completed
-    ${volume_name} =    generate_name_with_suffix    volume    ${volume_id}
-    wait_for_replica_rebuilding_to_complete   ${volume_name}
-
 Wait until volume ${volume_id} replica rebuilding stopped on ${replica_locality}
     ${volume_name} =    generate_name_with_suffix    volume    ${volume_id}
     wait_for_replica_rebuilding_to_stop_on_node    ${volume_name}    ${replica_locality}

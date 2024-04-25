@@ -24,6 +24,12 @@ class Volume(Base):
     def delete(self, volume_name):
         return self.volume.delete(volume_name)
 
+    def get_volume_node(self, volume_name):
+        return self.volume.get_volume_node(volume_name)
+
+    def get_replica_node(self, volume_name):
+        return self.volume.get_replica_node(volume_name)
+
     def attach(self, volume_name, node_name):
         return self.volume.attach(volume_name, node_name)
 

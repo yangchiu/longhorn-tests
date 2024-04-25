@@ -20,6 +20,14 @@ class Base(ABC):
         return NotImplemented
 
     @abstractmethod
+    def get_volume_node(self, volume_name):
+        return NotImplemented
+
+    @abstractmethod
+    def get_replica_node(self, volume_name):
+        return NotImplemented
+
+    @abstractmethod
     def wait_for_volume_state(self, volume_name, desired_state):
         return NotImplemented
 

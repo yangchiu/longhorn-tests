@@ -33,7 +33,7 @@ class volume_keywords:
         self.volume.delete(volume_name)
 
     def attach_volume(self, volume_name):
-        attach_node = self.node.get_test_pod_not_running_node()
+        attach_node = self.node.get_node_by_index(0)
         logging(f'Attaching volume {volume_name} to {attach_node}')
         self.volume.attach(volume_name, attach_node)
 
@@ -49,42 +49,18 @@ class volume_keywords:
         logging(f'Waiting for volume {volume_name} expand to {size}')
         return self.volume.wait_for_volume_expand_to_size(volume_name, size)
 
-    def get_replica_node_ids(self, volume_name):
-        node_ids = []
-        node_ids.extend(self.get_node_ids_by_replica_locality(volume_name, "volume node"))
-        node_ids.extend(self.get_node_ids_by_replica_locality(volume_name, "replica node"))
-        node_ids.extend(self.get_node_ids_by_replica_locality(volume_name, "test pod node"))
-        return node_ids
-
     def get_volume_node(self, volume_name):
-        return self.get_node_id_by_replica_locality(volume_name, "volume node")
+        return self.volume.get_volume_node(volume_name)
+
+    def get_replica_node(self, volume_name):
+        return self.volume.get_replica_node(volume_name)
 
     def get_node_id_by_replica_locality(self, volume_name, replica_locality):
-        return self.get_node_ids_by_replica_locality(volume_name, replica_locality)[0]
-
-    def get_node_ids_by_replica_locality(self, volume_name, replica_locality):
         check_replica_locality(replica_locality)
-
         if replica_locality == "volume node":
-            volume = self.volume.get(volume_name)
-            return [volume['spec']['nodeID']]
-
-        worker_nodes = self.node.list_node_names_by_role("worker")
-        volume_node = self.get_node_ids_by_replica_locality(volume_name, "volume node")
-        replica_nodes = [node for node in worker_nodes if node != volume_node]
-        test_pod_node = self.node.get_test_pod_running_node()
-
-        if replica_locality == "test pod node":
-            if test_pod_node in replica_nodes:
-                return [test_pod_node]
-
-        elif replica_locality == "replica node":
-            return [node for node in replica_nodes if node != test_pod_node]
-
+            return self.volume.get_volume_node(volume_name)
         else:
-            raise ValueError(f"Unknown replica locality {replica_locality}")
-
-        raise Exception(f"Failed to get node ID of the replica on {replica_locality}")
+            return self.volume.get_replica_node(volume_name)
 
     def write_volume_random_data(self, volume_name, size_in_mb):
         logging(f'Writing {size_in_mb} MB random data to volume {volume_name}')
@@ -155,11 +131,6 @@ class volume_keywords:
 
         logging(f"Waiting for volume {volume_name}'s replica on node {node_id} rebuilding completed")
         self.volume.wait_for_replica_rebuilding_complete(volume_name, node_id)
-
-    def wait_for_replica_rebuilding_to_complete(self, volume_name):
-        for node_id in self.get_replica_node_ids(volume_name):
-            logging(f"Waiting for volume {volume_name}'s replica on node {node_id} rebuilding completed")
-            self.volume.wait_for_replica_rebuilding_complete(volume_name, node_id)
 
     async def only_one_replica_rebuilding_will_start_at_a_time_on_node(self, volume_name_0, volume_name_1, replica_locality):
 

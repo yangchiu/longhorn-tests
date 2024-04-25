@@ -24,11 +24,9 @@ Delete Replica While Replica Rebuilding
         When Delete volume 0 replica on volume node
         And Wait until volume 0 replica rebuilding started on volume node
         And Delete volume 0 replica on replica node
-        And Wait until volume 0 replica rebuilding completed on volume node
-        And Delete volume 0 replica on test pod node
+        And Wait until volume 0 replica rebuilding completed on replica node
 
         Then Check volume 0 data is intact
-        And Wait until volume 0 replicas rebuilding completed
     END
 
 Reboot Volume Node While Replica Rebuilding

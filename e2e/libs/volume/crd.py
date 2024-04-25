@@ -70,6 +70,12 @@ class CRD(Base):
         except Exception as e:
             logging(f"Deleting volume error: {e}")
 
+    def get_volume_node(self, volume_name):
+        return Rest(self.node_exec).get_volume_node(volume_name)
+
+    def get_replica_node(self, volume_name):
+        return Rest(self.node_exec).get_replica_node(volume_name)
+
     def attach(self, volume_name, node_name):
         self.obj_api.patch_namespaced_custom_object(
             group="longhorn.io",

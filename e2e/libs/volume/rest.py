@@ -36,6 +36,22 @@ class Rest(Base):
     def delete(self, volume_name):
         return NotImplemented
 
+    def get_volume_node(self, volume_name):
+        return self.get(volume_name).controllers[0].hostId
+
+    def get_replica_node(self, volume_name):
+        replica_nodes = set()
+        replicas = self.get(volume_name).replicas
+        for replica in replicas:
+            replica_nodes.add(replica.hostId)
+        if len(replica_nodes) == 1:
+            return replica_node.pop()
+        else:
+            volume_node = self.get_volume_node(volume_name)
+            for node in sorted(replica_nodes):
+                if node != volume_node:
+                    return node
+
     def wait_for_volume_state(self, volume_name, desired_state):
         return NotImplemented
 

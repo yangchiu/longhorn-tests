@@ -1324,8 +1324,8 @@ def test_data_locality_basic(client, core_api, volume_name, pod, settings_reset)
     delete_and_wait_pod(core_api, pod3_name)
     wait_for_volume_detached(client, volume3_name)
     volume3 = client.by_id_volume(volume3_name)
-    assert len(volume3.replicas) == 1
-    assert volume3.replicas[0]["hostId"] == node3.name
+    assert len(volume3.replicas) == 1, f"volume3 = {volume3}, node1.name = {node1.name}, node2.name = {node2.name}, node3.name = {node3.name}"
+    assert volume3.replicas[0]["hostId"] == node3.name, f"volume3 = {volume3}, node1.name = {node1.name}, node2.name = {node2.name}, node3.name = {node3.name}"
 
     create_and_wait_pod(core_api, pod3)
     wait_for_rebuild_start(client, volume3_name)

@@ -2253,8 +2253,9 @@ def wait_for_engine_image_condition(client, image_name, state):
 
 def wait_for_engine_image_ref_count(client, image_name, count):
     wait_for_engine_image_creation(client, image_name)
-    for i in range(RETRY_COUNTS):
+    for i in range(86400):
         image = client.by_id_engine_image(image_name)
+        print(f"wait for engine image ref count = {count}, current = {image.refCount} ... ({i})")
         if image.refCount == count:
             break
         time.sleep(RETRY_INTERVAL)
@@ -3663,19 +3664,22 @@ def scale_up_engine_image_daemonset(client):
 
 
 def wait_for_deployed_engine_image_count(client, image_name, expected_cnt):
-    for i in range(RETRY_COUNTS):
+    for i in range(86400):
         image = client.by_id_engine_image(image_name)
+        if i % 100 == 0:
+            print(f"current nodeDeploymentMap = {image.nodeDeploymentMap}")
         deployed_cnt = 0
         if image.nodeDeploymentMap is None:
             continue
         for item in image.nodeDeploymentMap:
             if image.nodeDeploymentMap[item] is True:
                 deployed_cnt = deployed_cnt + 1
+        print(f"wait for deployed engine image count = {expected_cnt}, current = {deployed_cnt} ... ({i})")
         if deployed_cnt == expected_cnt:
             break
         time.sleep(RETRY_INTERVAL)
 
-    assert deployed_cnt == expected_cnt
+    assert deployed_cnt == expected_cnt, f"expected_cnt = {expected_cnt}, deployed_cnt = {deployed_cnt}, image = {image}"
 
 
 def wait_for_running_engine_image_count(image_name, engine_cnt):

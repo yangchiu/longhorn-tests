@@ -132,3 +132,6 @@ jobs:
         platforms: linux/amd64,linux/arm64
         tags: longhornio/longhorn-e2e-test:${{ github.ref_name }}
         file: e2e/Dockerfile
+
+    - name: sbom-generation
+      uses: anchore/sbom-action@v0

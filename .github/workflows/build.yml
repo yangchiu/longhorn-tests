@@ -53,18 +53,8 @@ jobs:
         context: ./
         push: false
         platforms: linux/amd64,linux/arm64
-        tags: longhornio/longhorn-manager-test:dry-run
+        tags: yangchiu/longhorn-manager-test:dry-run
         file: manager/integration/Dockerfile
-
-    # longhornio/longhorn-e2e-test image
-    - name: Build longhorn-e2e-test image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./
-        push: false
-        platforms: linux/amd64,linux/arm64
-        tags: longhornio/longhorn-e2e-test:dry-run
-        file: e2e/Dockerfile
 
   build_push_images:
     name: Build and push images
@@ -99,7 +89,7 @@ jobs:
         context: ./
         push: true
         platforms: linux/amd64,linux/arm64
-        tags: longhornio/longhorn-manager-test:${{ env.branch }}-head
+        tags: yangchiu/longhorn-manager-test:${{ env.branch }}-head
         file: manager/integration/Dockerfile
 
     - name: Build and push longhorn-manager-test image with git tag
@@ -109,29 +99,8 @@ jobs:
         context: ./
         push: true
         platforms: linux/amd64,linux/arm64
-        tags: longhornio/longhorn-manager-test:${{ github.ref_name }}
+        tags: yangchiu/longhorn-manager-test:${{ github.ref_name }}
         file: manager/integration/Dockerfile
-
-    # longhorn-e2e-test image
-    - name: Build and push longhorn-e2e-test image with branch head
-      if: ${{ startsWith(github.ref, 'refs/heads/') }}
-      uses: docker/build-push-action@v5
-      with:
-        context: ./
-        push: true
-        platforms: linux/amd64,linux/arm64
-        tags: longhornio/longhorn-e2e-test:${{ env.branch }}-head
-        file: e2e/Dockerfile
-
-    - name: Build and push longhorn-e2e-test image with git tag
-      if: ${{ startsWith(github.ref, 'refs/tags/') }}
-      uses: docker/build-push-action@v5
-      with:
-        context: ./
-        push: true
-        platforms: linux/amd64,linux/arm64
-        tags: longhornio/longhorn-e2e-test:${{ github.ref_name }}
-        file: e2e/Dockerfile
 
     - name: sbom-generation
       uses: anchore/sbom-action@v0

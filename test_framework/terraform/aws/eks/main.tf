@@ -107,6 +107,36 @@ resource "aws_eks_cluster" "eks_cluster" {
   }
 }
 
+# Create AWS key pair
+resource "aws_key_pair" "lh_aws_pair_key" {
+  key_name   = format("%s_%s", "lh_aws_key_pair", "${random_string.random_suffix.id}")
+  public_key = file(var.aws_ssh_public_key_file_path)
+
+  tags = {
+    Name = "lh_aws_key_pair-${random_string.random_suffix.id}"
+    Owner = "longhorn-infra"
+  }
+}
+
+data "template_file" "user_data" {
+  template = file("${path.module}/user_data.tpl")
+}
+
+resource "aws_launch_template" "launch_template" {
+
+  block_device_mappings {
+    device_name = "/dev/xvda"
+
+    ebs {
+      volume_size = 200
+      delete_on_termination = true
+      volume_type = "gp2"
+    }
+  }
+
+  user_data = base64encode(data.template_file.user_data.rendered)
+}
+
 # EKS Terraform - Creating the EKS Node Group
 resource "aws_eks_node_group" "node_group" {
   depends_on = [
@@ -118,10 +148,16 @@ resource "aws_eks_node_group" "node_group" {
   node_group_name = "${local.resource_name_prefix}-ng"
   node_role_arn   = aws_iam_role.eks_node_role.arn
   subnet_ids      = module.vpc.public_subnets
-  ami_type       = var.arch == "amd64" ? "AL2_x86_64" : "AL2_ARM_64"
+  ami_type       = var.arch == "amd64" ? "AL2023_x86_64_STANDARD" : "AL2023_ARM_64_STANDARD"
   capacity_type  = "ON_DEMAND"
   instance_types = [var.arch == "amd64" ? "t2.xlarge" : "a1.2xlarge"]
-  disk_size      = 40
+  remote_access {
+    ec2_ssh_key = aws_key_pair.lh_aws_pair_key.key_name
+  }
+  launch_template{
+      id = aws_launch_template.launch_template.id
+      version = aws_launch_template.launch_template.latest_version
+  }
   scaling_config {
     desired_size = 3
     max_size     = 6

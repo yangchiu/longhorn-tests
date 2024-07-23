@@ -22,3 +22,13 @@ variable "arch" {
   type        = string
   default     = "amd64"
 }
+
+variable "aws_ssh_public_key_file_path" {
+  type        = string
+  default     = "~/.ssh/id_rsa.pub"
+}
+
+variable "aws_ssh_private_key_file_path" {
+  type        = string
+  default     = "~/.ssh/id_rsa"
+}

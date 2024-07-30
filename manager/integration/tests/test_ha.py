@@ -894,6 +894,7 @@ def test_rebuild_with_inc_restoration(set_random_backupstore, client, core_api, 
     bv, b2 = find_backup(client, std_volume_name, snap2.name)
 
     # Trigger rebuild during the incremental restoration
+    wait_for_volume_restoration_start(client, dr_volume_name, b2.name)
     dr_volume = client.by_id_volume(dr_volume_name)
     for r in dr_volume.replicas:
         failed_replica = r.name

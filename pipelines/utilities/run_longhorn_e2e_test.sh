@@ -33,6 +33,9 @@ run_longhorn_e2e_test(){
     yq e -i 'select(.spec.containers[0] != null).spec.containers[0].env[6].value="true"' ${LONGHORN_TESTS_MANIFEST_FILE_PATH}
   fi
 
+  RESOURCE_SUFFIX=$(cat /tmp/longhorn-test/resource_suffix)
+  yq e -i 'select(.spec.containers[0] != null).spec.containers[0].env[7].value="'${RESOURCE_SUFFIX}'"' ${LONGHORN_TESTS_MANIFEST_FILE_PATH}
+
   yq e -i 'select(.spec.containers[0].env != null).spec.containers[0].env += {"name": "HOST_PROVIDER", "value": "'${LONGHORN_TEST_CLOUDPROVIDER}'"}' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
 
   set +x

@@ -21,6 +21,9 @@ else
   terraform -chdir=test_framework/terraform/${LONGHORN_TEST_CLOUDPROVIDER}/${DISTRO} apply -auto-approve -no-color
 fi
 
+mkdir /tmp/longhorn-test
+terraform -chdir=test_framework/terraform/${LONGHORN_TEST_CLOUDPROVIDER}/${DISTRO} output -raw resource_suffix > /tmp/longhorn-test/resource_suffix
+
 if [[ ${LONGHORN_TEST_CLOUDPROVIDER} == "aws" ]]; then
   if [[ "${TF_VAR_create_load_balancer}" == true ]]; then
     terraform -chdir=test_framework/terraform/${LONGHORN_TEST_CLOUDPROVIDER}/${DISTRO} output -raw load_balancer_url > test_framework/load_balancer_url

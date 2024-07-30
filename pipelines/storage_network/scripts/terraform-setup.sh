@@ -10,4 +10,7 @@ for id in ${NETWORK_INTERFACE_IDS}; do
   aws ec2 modify-network-interface-attribute --network-interface-id "${id}" --no-source-dest-check
 done
 
+mkdir /tmp/longhorn-test
+terraform -chdir=pipelines/storage_network/terraform output -raw resource_suffix > /tmp/longhorn-test/resource_suffix
+
 exit $?

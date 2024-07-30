@@ -5,3 +5,11 @@ output "network_interface_ids" {
   ]
   value = join(" ", concat(aws_network_interface.instance_eth0[*].id, aws_network_interface.instance_eth1[*].id))
 }
+
+output "resource_suffix" {
+  depends_on = [
+    random_string.random_suffix
+  ]
+
+  value = random_string.random_suffix.id
+}

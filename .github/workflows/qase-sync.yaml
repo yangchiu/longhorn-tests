@@ -17,7 +17,7 @@ jobs:
           echo $(pwd)
           files=($(git show --name-only --pretty=""))
           echo ${files[@]}
-          echo "files=${files}" >> $GITHUB_ENV
+          echo "files=${files[@]}" >> $GITHUB_ENV
 
       - name: Filter changed test cases
         env:
@@ -31,7 +31,7 @@ jobs:
             fi
           done
           echo "test_case = ${test_cases[@]}"
-          echo "test_cases=${test_cases}" >> $GITHUB_ENV
+          echo "test_cases=${test_cases[@]}" >> $GITHUB_ENV
 
       - name: Create missing test suites
         env:

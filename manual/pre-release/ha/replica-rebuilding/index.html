@@ -21,28 +21,28 @@
   
     <ul>
 
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/deployment/"> Deployment of Longhorn </a></li>
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/deployment/"> Deployment of Longhorn  </a></li>
   
 
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/ui/"> UI </a></li>
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/ui/">UI  </a></li>
   
 
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/volume/"> Volume </a></li>
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/volume/">Volume  </a></li>
   
 
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/kubernetes/"> Kubernetes </a></li>
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/kubernetes/">Kubernetes  </a></li>
   
 
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/backup/"> Backup </a></li>
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/backup/">Backup  </a></li>
   
 
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/node/"> Node </a></li>
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/node/">Node  </a></li>
   
 
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/scheduling/"> Scheduling </a></li>
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/scheduling/">Scheduling  </a></li>
   
 
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/upgrade/"> Upgrade </a></li>
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/upgrade/">Upgrade  </a></li>
   
 
   <li><a href="https://longhorn.github.io/longhorn-tests/manual/functional-test-cases/monitoring/">Monitoring</a></li>
@@ -229,17 +229,6 @@
 
   
 
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/pre-release/node-not-ready/node-disconnection/">Node Disconnection</a></li>
-  
-    <ul>
-
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/pre-release/node-not-ready/node-disconnection/node-disconnection/">Node disconnection test</a></li>
-  
-
-</ul>
-
-  
-
   <li><a href="https://longhorn.github.io/longhorn-tests/manual/pre-release/node-not-ready/node-down/">Node Down</a></li>
   
     <ul>
@@ -268,9 +257,6 @@
     <ul>
 
   <li><a href="https://longhorn.github.io/longhorn-tests/manual/pre-release/node-not-ready/node-restart/dr-volume-node-rebooted/">#1366 &amp;&amp; #1328 The node the DR volume attached to is rebooted</a></li>
-  
-
-  <li><a href="https://longhorn.github.io/longhorn-tests/manual/pre-release/node-not-ready/node-restart/physical-node-reboot/">Physical node reboot</a></li>
   
 
 </ul>
@@ -414,6 +400,9 @@
   <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/">Release specific tests</a></li>
   
     <ul>
+
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.8.0/fast-failover/test-rwx-fast-failover/">RWX Fast Failover</a></li>
+  
 
   <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.0.0/">v1.0.0</a></li>
   
@@ -788,7 +777,19 @@
   <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.7.0/test-gke-container-optimized-os-dependency-setup/">Dependency setup for GKE cluster using Container-Optimized OS as base image</a></li>
   
 
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.7.0/test-longhorn-cli-longhornctl/">Longhorn Commandline Interface (longhornctl)</a></li>
+  
+
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.7.0/test-node-disk-support/">Node Disk Support</a></li>
+  
+
   <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.7.0/test-kubelet-restart-no-pending-pod-event/">restarting Kubelet should not result in repeated &ldquo;no Pending workload pods &hellip;&rdquo; event for the workload pod.</a></li>
+  
+
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.7.0/test-rwx-fast-failover/">RWX Fast Failover</a></li>
+  
+
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.7.0/test-storage-network-support-for-rwx-volume/">Storage Network Support for RWX Volume</a></li>
   
 
   <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.7.0/test-support-bundle-node-collection-timeout/">Support bundle node collection timeout</a></li>
@@ -826,7 +827,8 @@
   <h1 id="title">Replica Rebuilding</h1>
   <div>
     <article id="content">
-       <ol>
+       <h3 id="basic-rebuilding-test">Basic Rebuilding test</h3>
+<ol>
 <li>Create and attach a volume.</li>
 <li>Write a large amount of data to the volume.</li>
 <li>Disable disk scheduling and the node scheduling for one replica.</li>
@@ -854,6 +856,21 @@
 </ol>
 </li>
 </ol>
+<h3 id="auto-balancing-of-replica-rebuilding">Auto balancing of replica rebuilding</h3>
+<h4 id="related-issue">Related issue:</h4>
+<p><a href="https://github.com/longhorn/longhorn/issues/4105">https://github.com/longhorn/longhorn/issues/4105</a></p>
+<p>Given Setting &ldquo;replica-soft-anti-affinity&rdquo; is &ldquo;false&rdquo;</p>
+<p>And Setting &ldquo;replica-auto-balance-disk-pressure-percentage&rdquo; is &ldquo;80&rdquo;</p>
+<p>And Disable node scheduling on 2 nodes. let&rsquo;s say node-2 &amp; node-3</p>
+<p>And Create multiple volumes to reach disk space percentage more 50%</p>
+<p>When Enable node scheduling on node-2</p>
+<p>Then Replica should rebuilt on node-2 to reduce the pressure on node-1</p>
+<p>When Setting &ldquo;replica-auto-balance-disk-pressure-percentage&rdquo; is &ldquo;40&rdquo;</p>
+<p>And Enable node scheduling on node-3</p>
+<p>Then Replica should rebuilt on node-3</p>
+<p>When Replica rebuilding is in progress, kill the replica process</p>
+<p>Then Replica should be failed and a new replica rebuilding should get trigger</p>
+<p>And No orphaned data should be leftover on the disk</p>
 
     </article>
   <a href="https://github.com/longhorn/longhorn-tests/edit/master/docs/content/manual/pre-release/ha/replica-rebuilding.md" target="_blank" title="Edit on Github" style="font-size:smaller;float:right;padding-right:3%">[Edit]</a>

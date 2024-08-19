@@ -182,3 +182,4 @@ https://github.com/longhorn/longhorn/issues/6205#issuecomment-2264430975
 **Verify** the share-managers on that node are recreated one of the remaining nodes.  
     - Every RWX volume with share-manager pods on the failed node are relocated to another node.  I/O can resume on its own after the shortened grace period.  
     - RWX volumes with share-manager pods not on the failed node should continue to operate without any disruption.
+

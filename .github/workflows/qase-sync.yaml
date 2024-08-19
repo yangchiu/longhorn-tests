@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 60
+          fetch-depth: 120
 
       - name: Fetch changed files
         run: |

@@ -17,8 +17,11 @@ jobs:
           echo $(pwd)
           files=($(git show --name-only --pretty=""))
           echo ${files[@]}
+          echo "files=${files}" >> $GITHUB_ENV
 
       - name: Filter changed test cases
+        env:
+          files: ${{ env.files }}
         run: |
           test_cases=()
           echo "files = ${files[@]}"
@@ -28,10 +31,12 @@ jobs:
             fi
           done
           echo "test_case = ${test_cases[@]}"
+          echo "test_cases=${test_cases}" >> $GITHUB_ENV
 
       - name: Create missing test suites
         env:
           token: ${{ secrets.QASE_TOKEN }}
+          test_cases: ${{ env.test_cases }}
         run: |
           for file_path in "${test_cases}"; do
             test_case_path=$(echo "${file_path#*manual/}")
@@ -72,6 +77,7 @@ jobs:
       - name: Create or update test cases
         env:
           token: ${{ secrets.QASE_TOKEN }}
+          test_cases: ${{ env.test_cases }}
         run: |
           cd docs/content/manual/
           for file_path in "${test_cases}"; do

@@ -26,7 +26,9 @@ jobs:
           test_cases=()
           echo "files = ${files[@]}"
           for file in "${files[@]}"; do
+            echo "file = $file"
             if [[ "${file}" == *"/manual/"* ]]; then
+              echo "test cases += ${file}"
               test_cases+=("$file")
             fi
           done

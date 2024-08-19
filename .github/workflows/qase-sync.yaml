@@ -37,8 +37,10 @@ jobs:
           done
           echo "test_case = ${test_cases[@]}"
           echo "test_cases=${test_cases[@]}" >> $GITHUB_ENV
+          echo "test_cases_length=${#test_cases[@]}" >> $GITHUB_ENV
 
       - name: Create missing test suites
+        if: ${{ env.test_cases_length > 0 }}
         env:
           token: ${{ secrets.QASE_TOKEN }}
           test_cases: ${{ env.test_cases }}
@@ -83,6 +85,7 @@ jobs:
           done
 
       - name: Create or update test cases
+        if: ${{ env.test_cases_length > 0 }}
         env:
           token: ${{ secrets.QASE_TOKEN }}
           test_cases: ${{ env.test_cases }}

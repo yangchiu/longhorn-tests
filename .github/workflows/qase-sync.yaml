@@ -15,7 +15,7 @@ jobs:
       - name: Fetch changed files
         run: |
           echo $(pwd)
-          files=($(git show --name-only --pretty="" "$GITHUB_SHA"))
+          files=($(git diff --name-only HEAD HEAD^))
           echo ${files[@]}
           echo "files=${files[@]}" >> $GITHUB_ENV
 

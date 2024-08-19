@@ -22,11 +22,11 @@ jobs:
         run: |
           test_cases=()
           for file in "${files[@]}"; do
-            if [[ "$file" == *"/manual/"* ]]; then
+            if [[ "${file}" == *"/manual/"* ]]; then
               test_cases+=("$file")
             fi
           done
-          echo ${test_cases[@]}
+          echo "test_case = ${test_cases[@]}"
 
       - name: Create missing test suites
         env:

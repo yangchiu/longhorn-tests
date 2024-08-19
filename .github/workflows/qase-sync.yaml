@@ -61,12 +61,12 @@ jobs:
                 str="${str[@]^}" # capitalize every word
               fi
               # check if the test suite already exists
-              echo "check if ${str} exists"
-              res=$(curl --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
+              res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
+              echo "check if ${str} exists: ${res}"
               # if not, create new test suite
               if [[ $(echo "$res" | jq .result.count) == "0" ]]; then
                 echo "create new test suite ${str} with parent id ${parent_suite_id}"
-                curl --request POST \
+                curl --request POST -s \
                      --url https://api.qase.io/v1/suite/LH \
                      --header "Token: ${token}" \
                      --header "accept: application/json" \
@@ -74,7 +74,7 @@ jobs:
                      --data "{ \"title\": \"${str}\", \"parent_id\": \"${parent_suite_id}\" }"
               fi
               # get parent suite id
-              res=$(curl --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
+              res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
               parent_suite_id=$(echo "$res" | jq .result.entities[0].id)
             done
           done
@@ -84,6 +84,7 @@ jobs:
           token: ${{ secrets.QASE_TOKEN }}
           test_cases: ${{ env.test_cases }}
         run: |
+          set -ex
           test_cases=(${test_cases})
           cd docs/content/manual/
           for file_path in "${test_cases[@]}"; do
@@ -93,11 +94,11 @@ jobs:
             description=$(sed -z 's/\n/\\n/g' ${file_path} | sed 's/ \\/ \\\\/g')
             echo "description = ${description}"
 
-            res=$(curl --request GET --url "https://api.qase.io/v1/case/LH" --data-urlencode "search=${title}" --header "Token: ${token}" --header "accept: application/json")
+            res=$(curl -s --request GET --url "https://api.qase.io/v1/case/LH" --data-urlencode "search=${title}" --header "Token: ${token}" --header "accept: application/json")
             if [[ "$(echo $res | jq .result.count) == "1" ]]; then
               # update existing test case
               test_case_id=$(echo $res | jq .result.entities[0].id)
-              curl --request PATCH \
+              curl --request PATCH -s \
                    --url "https://api.qase.io/v1/case/LH/${test_case_id}" \
                    --header "Token: ${token}" \
                    --header "accept: application/json" \
@@ -110,10 +111,10 @@ jobs:
               if [[ "${parent_suite_name}" == "manual" ]]; then:
                 parent_suite_id=""
               else
-                res=$(curl --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
+                res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
                 parent_suite_id=$(echo "$res" | jq .result.entities[0].id)
               fi
-              curl --request POST \
+              curl --request POST -s \
                    --url https://api.qase.io/v1/case/LH/ \
                    --header "Token: ${token}" \
                    --header "accept: application/json" \

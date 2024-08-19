@@ -42,8 +42,9 @@ jobs:
           test_cases: ${{ env.test_cases }}
         run: |
           test_cases=(${test_cases})
-          for file_path in "${test_cases}"; do
+          for file_path in "${test_cases[@]}"; do
             test_case_path=$(echo "${file_path#*manual/}")
+            echo "test_case_path = ${test_case_path}"
             IFS='/' read -ra arr <<< "$test_case_path"
             parent_suite_id=""
             for str in "${arr[@]}"; do
@@ -85,7 +86,7 @@ jobs:
         run: |
           test_cases=(${test_cases})
           cd docs/content/manual/
-          for file_path in "${test_cases}"; do
+          for file_path in "${test_cases[@]}"; do
 
             title=$(grep '^title:' ${file_path} | sed 's/title: "\(.*\)"/\1/')
             echo "title = ${title}"

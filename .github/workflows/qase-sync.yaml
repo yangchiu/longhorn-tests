@@ -87,6 +87,10 @@ jobs:
           cd docs/content/manual/
           for file_path in "${test_cases}"; do
 
+            if [["${file_path}" == *"_index"* ]]; then
+              continue
+            fi
+
             title=$(grep '^title:' ${file_path} | sed 's/title: "\(.*\)"/\1/')
             echo "title = ${title}"
             description=$(sed -z 's/\n/\\n/g' ${file_path} | sed 's/ \\/ \\\\/g')

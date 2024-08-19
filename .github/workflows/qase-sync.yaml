@@ -25,7 +25,7 @@ jobs:
         run: |
           test_cases=()
           echo "files = ${files[@]}"
-          files=(${files[@]})
+          files=(${files})
           for file in "${files[@]}"; do
             echo "file = $file"
             if [[ "${file}" == *"/manual/"* ]]; then
@@ -41,7 +41,7 @@ jobs:
           token: ${{ secrets.QASE_TOKEN }}
           test_cases: ${{ env.test_cases }}
         run: |
-          test_cases=(${test_cases[@]})
+          test_cases=(${test_cases})
           for file_path in "${test_cases}"; do
             test_case_path=$(echo "${file_path#*manual/}")
             IFS='/' read -ra arr <<< "$test_case_path"
@@ -83,6 +83,7 @@ jobs:
           token: ${{ secrets.QASE_TOKEN }}
           test_cases: ${{ env.test_cases }}
         run: |
+          test_cases=(${test_cases})
           cd docs/content/manual/
           for file_path in "${test_cases}"; do
 

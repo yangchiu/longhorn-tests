@@ -28,7 +28,7 @@ jobs:
           files=(${files})
           for file in "${files[@]}"; do
             echo "file = $file"
-            if [[ "${file}" == *"/manual/"* ]]; then
+            if [[ "${file}" == *"/manual/"* ]] && [[ "${file}" != *"_index"* ]]; then
               echo "test cases += ${file}"
               test_cases+=("$file")
             fi
@@ -86,10 +86,6 @@ jobs:
           test_cases=(${test_cases})
           cd docs/content/manual/
           for file_path in "${test_cases}"; do
-
-            if [["${file_path}" == *"_index"* ]]; then
-              continue
-            fi
 
             title=$(grep '^title:' ${file_path} | sed 's/title: "\(.*\)"/\1/')
             echo "title = ${title}"

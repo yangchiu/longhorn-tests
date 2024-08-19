@@ -401,6 +401,9 @@
   
     <ul>
 
+  <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.8.0/fast-failover/test-rwx-fast-failover/">RWX Fast Failover</a></li>
+  
+
   <li><a href="https://longhorn.github.io/longhorn-tests/manual/release-specific/v1.0.0/">v1.0.0</a></li>
   
     <ul>
@@ -827,7 +830,10 @@
        <ul>
 <li>Take a manual backup of the volume <code>bak</code> while a recurring backup is running</li>
 <li>verify that backup got created</li>
-<li>verify that backup sticks around even when recurring backups are cleaned up</li>
+<li>verify that backup sticks around even when recurring backups are cleaned up
+from-literal=AWS_SECRET_ACCESS_KEY=$AWS_KEY <br>
+AWS_SECRET_ACCESS_KEY_ID=$AWS_ID <br>
+END</li>
 </ul>
 
     </article>

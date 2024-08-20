@@ -131,7 +131,7 @@ jobs:
                   : # skip v*.*.*
                 elif [[ ${#parent_suite_name} -lt 4 ]]; then
                   # capitalize acronym like ha, eks, etc
-                  str=${str^^}
+                  $parent_suite_name=${parent_suite_name^^}
                 else
                   parent_suite_name=($parent_suite_name)
                   parent_suite_name="${parent_suite_name[@]^}" # capitalize every word

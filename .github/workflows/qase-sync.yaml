@@ -114,7 +114,7 @@ jobs:
                          --header "Token: ${token}" \
                          --header "accept: application/json" \
                          --header "content-type: application/json" \
-                         --data "{ \"description\": \"${description}\", \"title\": "${title}" }")
+                         --data "{ \"description\": \"${description}\", \"title\": \"${title}\" }")
 
               echo "updated existing test case: ${res}"
             else
@@ -132,7 +132,7 @@ jobs:
                          --header "Token: ${token}" \
                          --header "accept: application/json" \
                          --header "content-type: application/json" \
-                         --data "{ \"description\": \"${description}\", \"title\": "${title}", \"suite_id\": \"${parent_suite_id}\" }")
+                         --data "{ \"description\": \"${description}\", \"title\": \"${title}\", \"suite_id\": \"${parent_suite_id}\" }")
               echo "created new test case ${title}: ${res}"
             fi
           done

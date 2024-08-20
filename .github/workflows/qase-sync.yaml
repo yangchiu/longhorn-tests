@@ -75,12 +75,12 @@ jobs:
               # if not, create new test suite
               if [[ $(echo "$res" | jq .result.count) == "0" ]]; then
                 echo "creating new test suite ${str} with parent id ${parent_suite_id}"
-                #res=$(curl --request POST -s \
-                #           --url https://api.qase.io/v1/suite/LH \
-                #           --header "Token: ${token}" \
-                #           --header "accept: application/json" \
-                #           --header "content-type: application/json" \
-                #           --data "{ \"title\": \"${str}\", \"parent_id\": \"${parent_suite_id}\" }")
+                res=$(curl --request POST -s \
+                           --url https://api.qase.io/v1/suite/LH \
+                           --header "Token: ${token}" \
+                           --header "accept: application/json" \
+                           --header "content-type: application/json" \
+                           --data "{ \"title\": \"${str}\", \"parent_id\": \"${parent_suite_id}\" }")
                 echo "created new test suite ${str}: ${res}"
               fi
 
@@ -124,19 +124,19 @@ jobs:
             else
               # create new test case
               parent_suite_name=$(basename $(dirname ${file_path}))
-              if [[ "${parent_suite_name}" == "manual" ]]; then
+              if [[ "${parent_suite_name}" -eq "manual" ]]; then
                 parent_suite_id=""
               else
                 res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
                 parent_suite_id=$(echo "$res" | jq .result.entities[0].id)
               fi
               echo "creating new test case ${title} under test suite ${parent_suite_name}(${parent_suite_id})"
-              #res=$(curl --request POST -s \
-              #           --url https://api.qase.io/v1/case/LH/ \
-              #           --header "Token: ${token}" \
-              #           --header "accept: application/json" \
-              #           --header "content-type: application/json" \
-              #           --data "{ \"description\": \"${description}\", \"title\": "${title}", \"suite_id\": \"${parent_suite_id}\" }")
+              res=$(curl --request POST -s \
+                         --url https://api.qase.io/v1/case/LH/ \
+                         --header "Token: ${token}" \
+                         --header "accept: application/json" \
+                         --header "content-type: application/json" \
+                         --data "{ \"description\": \"${description}\", \"title\": "${title}", \"suite_id\": \"${parent_suite_id}\" }")
               echo "created new test case ${title}: ${res}"
             fi
           done

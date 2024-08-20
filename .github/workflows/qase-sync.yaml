@@ -59,7 +59,7 @@ jobs:
               str=${str//-/ } # replace - with whitespace
               if [[ $str =~ ^v.+\..+\.+.+$ ]]; then
                 : # skip v*.*.*
-              elif [[ ${#str} <= 3 ]]; then
+              elif [[ ${#str} -lt 4 ]]; then
                 : # skip acronym like ha, eks, etc
               else
                 str=($str)
@@ -129,7 +129,7 @@ jobs:
                 parent_suite_name=${parent_suite_name//-/ } # replace - with whitespace
                 if [[ $parent_suite_name =~ ^v.+\..+\.+.+$ ]]; then
                   : # skip v*.*.*
-                elif [[ ${#parent_suite_name} <= 3 ]]; then
+                elif [[ ${#parent_suite_name} -lt 4 ]]; then
                   : # skip acronym like ha, eks, etc
                 else
                   parent_suite_name=($parent_suite_name)

@@ -99,7 +99,7 @@ jobs:
 
           for file_path in "${test_cases[@]}"; do
 
-            title=$(grep '^title:' ${file_path} | sed 's/title: "\(.*\)"/\1/' | sed 's/"/\\"/g')
+            title=$(grep '^title:' ${file_path} | sed 's/title: //g' | sed 's/"/\\"/g')
             echo "got test case title: ${title}"
             description=$(sed -z 's/\n/\\n/g' ${file_path} | sed 's/ \\/ \\\\/g' | sed 's/"/\\"/g')
             echo "got test case description: ${description}"

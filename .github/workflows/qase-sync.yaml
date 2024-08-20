@@ -112,12 +112,14 @@ jobs:
             if [[ "$(echo $res | jq .result.count) == "1" ]]; then
               # update existing test case
               test_case_id=$(echo $res | jq .result.entities[0].id)
+              #
               #res=$(curl --request PATCH -s \
               #           --url "https://api.qase.io/v1/case/LH/${test_case_id}" \
               #           --header "Token: ${token}" \
               #           --header "accept: application/json" \
               #           --header "content-type: application/json" \
               #           --data "{ \"description\": \"${description}\", \"title\": "${title}" }")
+              #
               echo "updated existing test case: ${res}"
             else
               # create new test case

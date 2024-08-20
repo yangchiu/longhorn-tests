@@ -122,7 +122,7 @@ jobs:
               if [[ "${parent_suite_name}" == "manual" ]]; then
                 parent_suite_id=""
               else
-                res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --get --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
+                res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --get --data-urlencode "search=${title}" --header "Token: ${token}" --header "accept: application/json")
                 parent_suite_id=$(echo "$res" | jq .result.entities[0].id)
               fi
               echo "creating new test case ${title} under test suite ${parent_suite_name}(${parent_suite_id})"

@@ -96,9 +96,9 @@ jobs:
         env:
           token: ${{ secrets.QASE_TOKEN }}
           test_cases: ${{ env.test_cases }}
+        working-directory: ./docs/content/manual
         run: |
           test_cases=(${test_cases})
-          cd docs/content/manual/
 
           for file_path in "${test_cases[@]}"; do
 

@@ -20,13 +20,12 @@ jobs:
           #files=($(git diff --name-only HEAD HEAD~60))
           #files=($(git show --name-only --pretty=''))
           echo ${files[@]}
-          echo "files=${files[@]}" >> $GITHUB_ENV
+          echo "files=${files}" >> $GITHUB_ENV
 
       - name: Filter changed test cases
-        env:
-          files: ${{ env.files }}
         run: |
           test_cases=()
+          IFS=' ' read -r -a files <<< "${files}"
           echo "files = ${files[@]}"
           files=(${files})
           for file in "${files[@]}"; do

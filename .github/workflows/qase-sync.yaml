@@ -98,9 +98,9 @@ jobs:
 
           for file_path in "${test_cases[@]}"; do
 
-            title=$(grep '^title:' ${file_path} | sed 's/title: "\(.*\)"/\1/')
+            title=$(grep '^title:' ${file_path} | sed 's/title: "\(.*\)"/\1/' | sed 's/"/\\"/g')
             echo "got test case title: ${title}"
-            description=$(sed -z 's/\n/\\n/g' ${file_path} | sed 's/ \\/ \\\\/g' | sed 's/"/\"/g')
+            description=$(sed -z 's/\n/\\n/g' ${file_path} | sed 's/ \\/ \\\\/g' | sed 's/"/\\"/g')
             echo "got test case description: ${description}"
 
             res=$(curl -s --request GET --url "https://api.qase.io/v1/case/LH" --get --data-urlencode "search=${title}" --header "Token: ${token}" --header "accept: application/json")

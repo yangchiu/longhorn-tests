@@ -31,11 +31,11 @@ jobs:
           for file in "${files[@]}"; do
             echo "file = $file"
             if [[ "${file}" == *"/manual/"* ]] && [[ "${file}" != *"_index"* ]]; then
-              echo "test cases += ${file}"
-              test_cases+=("$file")
+              test_case=$(echo "${file#*manual/}")
+              test_cases+=("test_case")
             fi
           done
-          echo "test_case = ${test_cases[@]}"
+          echo "collected test cases: ${test_cases[@]}"
           echo "test_cases=${test_cases[@]}" >> $GITHUB_ENV
           echo "test_cases_length=${#test_cases[@]}" >> $GITHUB_ENV
 
@@ -46,11 +46,10 @@ jobs:
           test_cases: ${{ env.test_cases }}
         run: |
           test_cases=(${test_cases})
-          for file_path in "${test_cases[@]}"; do
+          for test_case in "${test_cases[@]}"; do
 
-            test_case_path=$(echo "${file_path#*manual/}")
-            echo "processing test case: ${test_case_path}"
-            IFS='/' read -ra arr <<< "$test_case_path"
+            echo "processing test case: ${test_case}"
+            IFS='/' read -ra arr <<< "${test_case}"
 
             parent_suite_id=""
 

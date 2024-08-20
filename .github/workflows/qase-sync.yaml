@@ -12,11 +12,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 300
+          fetch-depth: 3
 
       - name: Fetch changed files
         run: |
-          files=($(git diff --name-only HEAD HEAD~120))
+          files=($(git diff --name-only HEAD HEAD^))
           echo ${files[@]}
           echo "files=${files[@]}" >> $GITHUB_ENV
 
@@ -97,7 +97,6 @@ jobs:
           test_cases: ${{ env.test_cases }}
         working-directory: ./docs/content/manual
         run: |
-          set -ex
           test_cases=(${test_cases})
 
           for file_path in "${test_cases[@]}"; do

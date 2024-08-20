@@ -16,7 +16,6 @@ jobs:
 
       - name: Fetch changed files
         run: |
-          echo $(pwd)
           files=($(git diff --name-only HEAD HEAD~60))
           echo ${files[@]}
           echo "files=${files[@]}" >> $GITHUB_ENV
@@ -26,13 +25,11 @@ jobs:
           files: ${{ env.files }}
         run: |
           test_cases=()
-          echo "files = ${files[@]}"
           files=(${files})
           for file in "${files[@]}"; do
-            echo "file = $file"
             if [[ "${file}" == *"/manual/"* ]] && [[ "${file}" != *"_index"* ]]; then
               test_case=$(echo "${file#*manual/}")
-              test_cases+=("test_case")
+              test_cases+=("${test_case}")
             fi
           done
           echo "collected test cases: ${test_cases[@]}"

@@ -69,13 +69,13 @@ jobs:
               fi
 
               # check if the test suite already exists
-              res=$(curl -s -f --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
+              res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
               echo "checked if test suite ${str} exists: ${res}"
 
               # if not, create new test suite
               if [[ $(echo "$res" | jq .result.count) == "0" ]]; then
                 echo "creating new test suite ${str} with parent id ${parent_suite_id}"
-                res=$(curl --request POST -s -f \
+                res=$(curl --request POST -s \
                            --url https://api.qase.io/v1/suite/LH \
                            --header "Token: ${token}" \
                            --header "accept: application/json" \
@@ -85,7 +85,7 @@ jobs:
               fi
 
               # update parent suite id for the next iteration
-              res=$(curl -f -s --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
+              res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
               parent_suite_id=$(echo "$res" | jq .result.entities[0].id)
               echo "updated parent suite id to ${parent_suite_id}: ${res}"
             done

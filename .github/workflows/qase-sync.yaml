@@ -96,7 +96,6 @@ jobs:
           test_cases: ${{ env.test_cases }}
         working-directory: ./docs/content/manual
         run: |
-          set -ex
           test_cases=(${test_cases})
 
           for file_path in "${test_cases[@]}"; do

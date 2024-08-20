@@ -109,7 +109,7 @@ jobs:
             echo "got test case description: ${description}"
 
             res=$(curl -s --request GET --url "https://api.qase.io/v1/case/LH" --data-urlencode "search=${title}" --header "Token: ${token}" --header "accept: application/json")
-            if [[ "$(echo $res | jq .result.count) == "1" ]]; then
+            if [[ $(echo $res | jq .result.count) == "1" ]]; then
               # update existing test case
               test_case_id=$(echo $res | jq .result.entities[0].id)
 
@@ -124,7 +124,7 @@ jobs:
             else
               # create new test case
               parent_suite_name=$(basename $(dirname ${file_path}))
-              if [[ "${parent_suite_name}" -eq "manual" ]]; then
+              if [[ "${parent_suite_name}" == "manual" ]]; then
                 parent_suite_id=""
               else
                 res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")

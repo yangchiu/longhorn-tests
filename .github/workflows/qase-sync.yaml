@@ -60,7 +60,8 @@ jobs:
               if [[ $str =~ ^v.+\..+\.+.+$ ]]; then
                 : # skip v*.*.*
               elif [[ ${#str} -lt 4 ]]; then
-                : # skip acronym like ha, eks, etc
+                # capitalize acronym like ha, eks, etc
+                str=${str^^}
               else
                 str=($str)
                 str="${str[@]^}" # capitalize every word
@@ -129,7 +130,8 @@ jobs:
                 if [[ $parent_suite_name =~ ^v.+\..+\.+.+$ ]]; then
                   : # skip v*.*.*
                 elif [[ ${#parent_suite_name} -lt 4 ]]; then
-                  : # skip acronym like ha, eks, etc
+                  # capitalize acronym like ha, eks, etc
+                  str=${str^^}
                 else
                   parent_suite_name=($parent_suite_name)
                   parent_suite_name="${parent_suite_name[@]^}" # capitalize every word

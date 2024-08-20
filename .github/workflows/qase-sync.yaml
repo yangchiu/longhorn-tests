@@ -97,6 +97,7 @@ jobs:
           token: ${{ secrets.QASE_TOKEN }}
           test_cases: ${{ env.test_cases }}
         run: |
+          set -ex
           test_cases=(${test_cases})
           cd docs/content/manual/
 

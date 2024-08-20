@@ -59,6 +59,8 @@ jobs:
               str=${str//-/ } # replace - with whitespace
               if [[ $str =~ ^v.+\..+\.+.+$ ]]; then
                 : # skip v*.*.*
+              elif [[ ${#str} <= 3 ]]; then
+                : # skip acronym like ha, eks, etc
               else
                 str=($str)
                 str="${str[@]^}" # capitalize every word
@@ -120,10 +122,20 @@ jobs:
             else
               # create new test case
               parent_suite_name=$(basename $(dirname ${file_path}))
+
               if [[ "${parent_suite_name}" == "manual" ]]; then
                 parent_suite_id=""
               else
-                res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --get --data-urlencode "search=${title}" --header "Token: ${token}" --header "accept: application/json")
+                parent_suite_name=${parent_suite_name//-/ } # replace - with whitespace
+                if [[ $parent_suite_name =~ ^v.+\..+\.+.+$ ]]; then
+                  : # skip v*.*.*
+                elif [[ ${#parent_suite_name} <= 3 ]]; then
+                  : # skip acronym like ha, eks, etc
+                else
+                  parent_suite_name=($parent_suite_name)
+                  parent_suite_name="${parent_suite_name[@]^}" # capitalize every word
+                fi
+                res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --get --data-urlencode "search=${parent_suite_name}" --header "Token: ${token}" --header "accept: application/json")
                 parent_suite_id=$(echo "$res" | jq .result.entities[0].id)
               fi
               echo "creating new test case ${title} under test suite ${parent_suite_name}(${parent_suite_id})"

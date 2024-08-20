@@ -108,7 +108,7 @@ jobs:
             echo "got test case description: ${description}"
 
             res=$(curl -s --request GET --url "https://api.qase.io/v1/case/LH" --get --data-urlencode "search=${title}" --header "Token: ${token}" --header "accept: application/json")
-            if [[ $(echo $res | jq .result.count) == "1" ]]; then
+            if [[ $(echo $res | jq .result.count) -ne "0" ]]; then
               # update existing test case
               test_case_id=$(echo $res | jq .result.entities[0].id)
 

@@ -69,7 +69,7 @@ Reboot Node One By One While Workload Heavy Writing
         And Check statefulset 2 works
     END
 
-Power Off Node One By Once For More Than Pod Eviction Timeout While Workload Heavy Writing
+Power Off Node One By One For More Than Pod Eviction Timeout While Workload Heavy Writing
     [Tags]    reboot
     Given Set setting rwx-volume-fast-failover to ${RWX_VOLUME_FAST_FAILOVER}
     And Create storageclass strict-local with    numberOfReplicas=1    dataLocality=strict-local

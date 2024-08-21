@@ -1,0 +1,151 @@
+name: Qase Sync
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  qase-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+
+      - name: Fetch changed files
+        run: |
+          files=($(git diff --name-only HEAD HEAD^))
+          echo ${files[@]}
+          echo "files=${files[@]}" >> $GITHUB_ENV
+
+      - name: Filter changed test cases
+        env:
+          files: ${{ env.files }}
+        run: |
+          test_cases=()
+          files=(${files})
+          for file in "${files[@]}"; do
+            if [[ "${file}" == *"/manual/"* ]] && [[ "${file}" != *"_index"* ]]; then
+              test_case=$(echo "${file#*manual/}")
+              test_cases+=("${test_case}")
+            fi
+          done
+          echo "collected test cases: ${test_cases[@]}"
+          echo "test_cases=${test_cases[@]}" >> $GITHUB_ENV
+          echo "test_cases_length=${#test_cases[@]}" >> $GITHUB_ENV
+
+      - name: Create missing test suites
+        if: ${{ env.test_cases_length > 0 }}
+        env:
+          token: ${{ secrets.QASE_TOKEN }}
+          test_cases: ${{ env.test_cases }}
+        run: |
+          test_cases=(${test_cases})
+          for test_case in "${test_cases[@]}"; do
+
+            echo "processing test case: ${test_case}"
+            IFS='/' read -ra arr <<< "${test_case}"
+
+            parent_suite_id=""
+
+            for str in "${arr[@]}"; do
+              if [[ $str == *".md"* ]]; then
+                # only deal with test suite in this step
+                # test case will be processed in the next step
+                break
+              fi
+              str=${str//-/ } # replace - with whitespace
+              if [[ $str =~ ^v.+\..+\.+.+$ ]]; then
+                : # skip v*.*.*
+              elif [[ ${#str} -lt 4 ]]; then
+                # capitalize acronym like ha, eks, etc
+                str=${str^^}
+              else
+                str=($str)
+                str="${str[@]^}" # capitalize every word
+              fi
+
+              # check if the test suite already exists
+              res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --get --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
+              echo "checked if test suite ${str} exists: ${res}"
+
+              # if not, create new test suite
+              if [[ $(echo "$res" | jq .result.count) == "0" ]]; then
+                echo "creating new test suite ${str} with parent id ${parent_suite_id}"
+                res=$(curl --request POST -s \
+                           --url https://api.qase.io/v1/suite/LH \
+                           --header "Token: ${token}" \
+                           --header "accept: application/json" \
+                           --header "content-type: application/json" \
+                           --data "{ \"title\": \"${str}\", \"parent_id\": \"${parent_suite_id}\" }")
+                echo "created new test suite ${str}: ${res}"
+              fi
+
+              # update parent suite id for the next iteration
+              res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --get --data-urlencode "search=${str}" --header "Token: ${token}" --header "accept: application/json")
+              parent_suite_id=$(echo "$res" | jq .result.entities[0].id)
+              echo "updated parent suite id to ${parent_suite_id}: ${res}"
+            done
+          done
+
+      - name: Create or update test cases
+        if: ${{ env.test_cases_length > 0 }}
+        env:
+          token: ${{ secrets.QASE_TOKEN }}
+          test_cases: ${{ env.test_cases }}
+        working-directory: ./docs/content/manual
+        run: |
+          test_cases=(${test_cases})
+
+          for file_path in "${test_cases[@]}"; do
+
+            title=$(grep '^title:' ${file_path} | sed 's/title: //g' | sed 's/"/\\"/g')
+            echo "got test case title: ${title}"
+            description=$(sed -z 's/\n/\\n/g' ${file_path} | sed 's/ \\/ \\\\/g' | sed 's/"/\\"/g')
+            echo "got test case description: ${description}"
+
+            res=$(curl -s --request GET --url "https://api.qase.io/v1/case/LH" --get --data-urlencode "search=${title}" --header "Token: ${token}" --header "accept: application/json")
+            if [[ $(echo $res | jq .result.count) -ne "0" ]]; then
+              # update existing test case
+              test_case_id=$(echo $res | jq .result.entities[0].id)
+
+              res=$(curl --request PATCH -s \
+                         --url "https://api.qase.io/v1/case/LH/${test_case_id}" \
+                         --header "Token: ${token}" \
+                         --header "accept: application/json" \
+                         --header "content-type: application/json" \
+                         --data "{ \"description\": \"${description}\", \"title\": \"${title}\" }")
+
+              echo "updated existing test case: ${res}"
+            else
+              # create new test case
+              parent_suite_name=$(basename $(dirname ${file_path}))
+
+              if [[ "${parent_suite_name}" == "manual" ]]; then
+                parent_suite_id=""
+              else
+                parent_suite_name=${parent_suite_name//-/ } # replace - with whitespace
+                if [[ $parent_suite_name =~ ^v.+\..+\.+.+$ ]]; then
+                  : # skip v*.*.*
+                elif [[ ${#parent_suite_name} -lt 4 ]]; then
+                  # capitalize acronym like ha, eks, etc
+                  parent_suite_name=${parent_suite_name^^}
+                else
+                  parent_suite_name=($parent_suite_name)
+                  parent_suite_name="${parent_suite_name[@]^}" # capitalize every word
+                fi
+                res=$(curl -s --request GET --url "https://api.qase.io/v1/suite/LH" --get --data-urlencode "search=${parent_suite_name}" --header "Token: ${token}" --header "accept: application/json")
+                parent_suite_id=$(echo "$res" | jq .result.entities[0].id)
+              fi
+              echo "creating new test case ${title} under test suite ${parent_suite_name}(${parent_suite_id})"
+              res=$(curl --request POST -s \
+                         --url https://api.qase.io/v1/case/LH/ \
+                         --header "Token: ${token}" \
+                         --header "accept: application/json" \
+                         --header "content-type: application/json" \
+                         --data "{ \"description\": \"${description}\", \"title\": \"${title}\", \"suite_id\": \"${parent_suite_id}\" }")
+              echo "created new test case ${title}: ${res}"
+            fi
+          done

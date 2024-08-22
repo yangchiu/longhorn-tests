@@ -3,7 +3,7 @@ title: Restore to a new cluster
 ---
 
 #### Back up the old cluster
-1. Deploy the 1st cluster then install Longhorn system and Velero.OKOK
+1. Deploy the 1st cluster then install Longhorn system and Velero.OKOKOOOOO
 2. Deploy some workloads using Longhorn volumes then write some data:
    1. A simple pod using multiple volumes. And some volumes are using backing images.
    2. A StatefulSet.

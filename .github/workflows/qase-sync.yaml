@@ -101,13 +101,29 @@ jobs:
 
           for file_path in "${test_cases[@]}"; do
 
+            if [[ ! -e "${file_path}" ]]; then
+              echo "${file_path} has been deleted"
+              git checkout HEAD^ -- "${file_path}"
+              delete_test_case=true
+            fi
+
             title=$(grep '^title:' ${file_path} | sed 's/title: //g' | sed 's/"/\\"/g')
             echo "got test case title: ${title}"
             description=$(sed -z 's/\n/\\n/g' ${file_path} | sed 's/ \\/ \\\\/g' | sed 's/"/\\"/g')
             echo "got test case description: ${description}"
 
             res=$(curl -s --request GET --url "https://api.qase.io/v1/case/LH" --get --data-urlencode "search=${title}" --header "Token: ${token}" --header "accept: application/json")
-            if [[ $(echo $res | jq .result.count) -ne "0" ]]; then
+            if [[ $(echo $res | jq .result.count) -ne "0" ]] && [[ ${delete_test_case} ]]; then
+              # delete existing test case
+              test_case_id=$(echo $res | jq .result.entities[0].id)
+
+              res=$(curl --request DELETE -s \
+                         --url "https://api.qase.io/v1/case/LH/${test_case_id}" \
+                         --header "Token: ${token}" \
+                         --header "accept: application/json")
+
+              echo "deleted existing test case: ${res}"
+            elif [[ $(echo $res | jq .result.count) -ne "0" ]]; then
               # update existing test case
               test_case_id=$(echo $res | jq .result.entities[0].id)
 

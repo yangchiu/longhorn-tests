@@ -197,14 +197,14 @@ node {
 
             stage ('longhorn coverage') {
                 if(!params.LONGHORN_UPGRADE_TEST && !params.AIR_GAP_INSTALLATION && JOB_BASE_NAME != "longhorn-tests-regression" && DISTRO == "sles") {
-                    sh "docker exec ${JOB_BASE_NAME}-${BUILD_NUMBER} test_framework/scripts/longhorn-coverage.sh"
+                    sh "docker exec ${JOB_BASE_NAME}-${BUILD_NUMBER} test_framework/scripts/longhorn-coverage.sh || true"
 
-                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/longhorn-manager-profile.html ."
-                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/longhorn-engine-profile.html ."
-                    // sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/longhorn-spdk-engine-profile.html ."
-                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/longhorn-instance-manager-profile.html ."
-                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/longhorn-share-manager-profile.html ."
-                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/backing-image-manager-profile.html ."
+                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/longhorn-manager-profile.html . || true"
+                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/longhorn-engine-profile.html . || true"
+                    // sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/longhorn-spdk-engine-profile.html . || true"
+                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/longhorn-instance-manager-profile.html . || true"
+                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/longhorn-share-manager-profile.html . || true"
+                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:/src/longhorn-tests/backing-image-manager-profile.html . || true"
 
                     publishHTML (target: [
                         allowMissing: true,

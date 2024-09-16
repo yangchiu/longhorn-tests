@@ -29,7 +29,7 @@ RUN wget -q https://storage.googleapis.com/kubernetes-release/release/$KUBECTL_V
     apk add py3-beautifulsoup4 py3-requests py3-lxml && \
     ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa && \
     curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
-    chmod 700 get_helm.sh && \
-    ./get_helm.sh
+    chmod 700 get_helm.sh && ./get_helm.sh && \
+    git config --global http.postBuffer 524288000
 
 COPY [".", "$WORKSPACE"]

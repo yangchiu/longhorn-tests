@@ -6226,3 +6226,146 @@ def create_deployment_and_write_data(client, # NOQA
 
     volume = client.by_id_volume(volume_name)
     return volume, deployment_pod_names[0], checksum, deployment
+
+
+def wait_delete_dm_device(api, name):
+    path = os.path.join("/dev/mapper", name)
+    for i in range(RETRY_COUNTS):
+        found = os.path.exists(path)
+        if not found:
+            break
+        time.sleep(RETRY_INTERVAL)
+    assert not found
+
+
+def wait_for_volume_replica_rebuilt_on_same_node_different_disk(client, node_name, volume_name, old_disk_name):  # NOQA
+    new_disk_name = ""
+    for _ in range(RETRY_COUNTS_SHORT):
+        time.sleep(RETRY_INTERVAL_LONG)
+
+        node = client.by_id_node(node_name)
+        disks = node.disks
+        new_disk_name = ""
+        for name, disk in disks.items():
+            # if scheduledReplica has prefix of volume-name
+            for scheduledReplica, _ in disk.scheduledReplica.items():
+                if scheduledReplica.startswith(volume_name):
+                    new_disk_name = name
+                    break
+        if new_disk_name != old_disk_name:
+            break
+
+    assert new_disk_name != old_disk_name, \
+        "Failed to rebuild replica disk to another disk"
+
+
+def set_tags_for_node_and_its_disks(client, node, node_tags, disks_tags_map): # NOQA
+    for disk_name in node.disks.keys():
+        if disk_name in disks_tags_map:
+            node.disks[disk_name].tags = disks_tags_map[disk_name]
+
+    node = update_node_disks(client, node.name, disks=node.disks)
+    for disk_name in node.disks.keys():
+        if disk_name in disks_tags_map:
+            assert node.disks[disk_name].tags == disks_tags_map[disk_name]
+
+    if len(node_tags) == 0:
+        expected_tags = []
+    else:
+        expected_tags = list(node_tags)
+
+    node = set_node_tags(client, node, node_tags)
+    assert node.tags == expected_tags
+
+
+def set_tags_for_node_and_its_disks(client, node, tags): # NOQA
+    if len(tags) == 0:
+        expected_tags = []
+    else:
+        expected_tags = list(tags)
+
+    for disk_name in node.disks.keys():
+        node.disks[disk_name].tags = tags
+    node = update_node_disks(client, node.name, disks=node.disks)
+    for disk_name in node.disks.keys():
+        assert node.disks[disk_name].tags == expected_tags
+
+    node = set_node_tags(client, node, tags)
+    assert node.tags == expected_tags
+
+    return node
+
+
+def get_node_by_disk_id(client, disk_id): # NOQA
+    nodes = client.list_node()
+
+    for node in nodes:
+        disks = node.disks
+        for name, disk in iter(disks.items()):
+            if disk.diskUUID == disk_id:
+                return node
+    # should handle empty result in caller
+    return ""
+
+
+def check_backing_image_single_copy_disk_eviction(client, bi_name, old_disk_id): # NOQA
+    for i in range(RETRY_COUNTS):
+        backing_image = client.by_id_backing_image(bi_name)
+        current_disk_id = next(iter(backing_image.diskFileStatusMap))
+        if current_disk_id != old_disk_id:
+            break
+
+        time.sleep(RETRY_INTERVAL)
+
+    assert current_disk_id != old_disk_id
+
+
+def check_backing_image_single_copy_node_eviction(client, bi_name, old_node): # NOQA
+    for i in range(RETRY_COUNTS):
+        backing_image = client.by_id_backing_image(bi_name)
+        current_disk_id = next(iter(backing_image.diskFileStatusMap))
+        current_node = get_node_by_disk_id(client, current_disk_id)
+        if current_node.name != old_node.name:
+            break
+
+        time.sleep(RETRY_INTERVAL)
+
+    assert current_node.name != old_node.name
+
+
+def check_backing_image_eviction_failed(name): # NOQA
+    core_client = get_core_api_client()
+    selector = "involvedObject.kind=BackingImage,involvedObject.name=" + name
+    check = False
+
+    for i in range(RETRY_COUNTS_LONG):
+        events = core_client.list_namespaced_event(
+            namespace=LONGHORN_NAMESPACE,
+            field_selector=selector,
+        ).items
+        if len(events) == 0:
+            continue
+
+        for j in range(len(events)):
+            if (events[j].reason == FAILED_DELETING_REASONE and
+                    BACKINGIMAGE_FAILED_EVICT_MSG in events[j].message):
+                check = True
+                break
+
+        if check:
+            break
+
+        time.sleep(RETRY_INTERVAL)
+
+    assert check
+
+
+def wait_for_replica_count(client, volume_name, replica_count):
+    for i in range(RETRY_COUNTS):
+        volume = client.by_id_volume(volume_name)
+        if len(volume.replicas) == replica_count:
+            break
+        time.sleep(RETRY_INTERVAL)
+
+    volume = client.by_id_volume(volume_name)
+    assert len(volume.replicas) == replica_count

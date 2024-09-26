@@ -18,7 +18,7 @@ for INSTANCE in ${ALL_INSTANCES[@]}; do
   echo "   Launch Time: ${LAUNCH_TIME} (${TIMESTAMP}), Diff: ${TIME_DIFF}"
   RESOURCE_SUFFIX=$(echo "$INSTANCE" | jq '.Tags[] | select(.Key == "Name").Value' | tr -d '"' | rev | cut -d- -f1 | rev)
   echo "   Resource Suffix: $RESOURCE_SUFFIX"
-  if [[ $TIME_DIFF -gt $THRESHOLD_IN_SEC ]]; then SUFFIX_ARR+=("$RESOURCE_SUFFIX"); fi
+  if [[ $TIME_DIFF -gt $THRESHOLD_IN_SEC ]] && [[ ${#RESOURCE_SUFFIX} -gt 7 ]]; then SUFFIX_ARR+=("$RESOURCE_SUFFIX"); fi
 done
 
 echo "[Step 2] Get long-running resource suffixes:"

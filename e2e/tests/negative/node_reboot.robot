@@ -31,6 +31,7 @@ ${DATA_ENGINE}    v1
 Reboot Node One By One While Workload Heavy Writing
     [Tags]    reboot
     Given Set setting rwx-volume-fast-failover to ${RWX_VOLUME_FAST_FAILOVER}
+    And Set setting auto-salvage to true
     And Create storageclass strict-local with    numberOfReplicas=1    dataLocality=strict-local
     And Create storageclass longhorn-test with    dataEngine=${DATA_ENGINE}
     And Create persistentvolumeclaim 0 using RWO volume with longhorn-test storageclass

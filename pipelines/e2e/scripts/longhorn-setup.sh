@@ -31,6 +31,7 @@ longhornctl_check(){
   ./longhornctl install preflight
   ./longhornctl check preflight
   if [[ -n $(./longhornctl check preflight 2>&1 | grep error) ]]; then
+    sleep 86400
     exit 1
   fi
 }

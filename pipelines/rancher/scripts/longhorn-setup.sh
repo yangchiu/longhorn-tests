@@ -40,6 +40,8 @@ main(){
   install_rancher
   get_rancher_api_key
 
+  #sleep 86400
+
   if [[ "${LONGHORN_UPGRADE_TEST}" == true ]]; then
     install_longhorn_rancher_chart "${LONGHORN_STABLE_VERSION}"
     LONGHORN_UPGRADE_TEST_POD_NAME="longhorn-test-upgrade"
@@ -53,9 +55,11 @@ main(){
         UPGRADE_LH_ENGINE_IMAGE="longhornio/longhorn-engine:v${RAW_VERSION[1]}"
       fi
     run_longhorn_upgrade_test
+    sleep 86400
     run_longhorn_test
   else
     install_longhorn_rancher_chart
+    sleep 86400
     run_longhorn_test
   fi
 }

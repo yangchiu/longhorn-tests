@@ -3,6 +3,7 @@ Documentation    Scheduling Test Cases
 
 Test Tags    regression
 
+Resource    ../keywords/variables.resource
 Resource    ../keywords/common.resource
 Resource    ../keywords/volume.resource
 Resource    ../keywords/setting.resource
@@ -13,12 +14,6 @@ Resource    ../keywords/k8s.resource
 
 Test Setup    Set test environment
 Test Teardown    Cleanup test resources
-
-*** Variables ***
-${LOOP_COUNT}    1
-${RETRY_COUNT}    300
-${RETRY_INTERVAL}    1
-${DATA_ENGINE}    v1
 
 *** Test Cases ***
 Test Soft Anti Affinity Scheduling

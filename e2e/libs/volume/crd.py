@@ -301,7 +301,7 @@ class CRD(Base):
     def wait_for_volume_migration_ready(self, volume_name):
         ready = False
         for i in range(self.retry_count):
-            logging(f"Waiting for volume {volume_name} migration ready ({i}) ...")
+            logging(f"Waiting for volume {volume_name} migration to be ready ({i}) ...")
             try:
                 engines = self.engine.get_engines(volume_name)
                 ready = len(engines) == 2
@@ -314,7 +314,7 @@ class CRD(Base):
             time.sleep(self.retry_interval)
         assert ready
 
-    def wait_for_volume_migration_completed(self, volume_name, node_name):
+    def wait_for_volume_migration_complete(self, volume_name, node_name):
         completed = False
         for i in range(self.retry_count):
             logging(f"Waiting for volume {volume_name} migration to node {node_name} completed ({i}) ...")

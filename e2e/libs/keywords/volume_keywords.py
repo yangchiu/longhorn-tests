@@ -272,9 +272,9 @@ class volume_keywords:
         logging(f'Waiting for volume {volume_name} migration to be ready')
         self.volume.wait_for_volume_migration_ready(volume_name)
 
-    def wait_for_volume_migration_completed(self, volume_name, node_name):
-        logging(f'Waiting for volume {volume_name} migration to node {node_name} completed')
-        self.volume.wait_for_volume_migration_completed(volume_name, node_name)
+    def wait_for_volume_migration_complete(self, volume_name, node_name):
+        logging(f'Waiting for volume {volume_name} migration to node {node_name} complete')
+        self.volume.wait_for_volume_migration_complete(volume_name, node_name)
 
     def wait_for_volume_restoration_completed(self, volume_name, backup_name):
         logging(f'Waiting for volume {volume_name} restoration from {backup_name} completed')

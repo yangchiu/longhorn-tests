@@ -74,7 +74,7 @@ class Rest(Base):
     def wait_for_volume_migration_ready(self, volume_name):
         return NotImplemented
 
-    def wait_for_volume_migration_completed(self, volume_name, node_name):
+    def wait_for_volume_migration_complete(self, volume_name, node_name):
         return NotImplemented
 
     def wait_for_volume_restoration_completed(self, volume_name):

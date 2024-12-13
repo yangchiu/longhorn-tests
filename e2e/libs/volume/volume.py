@@ -21,6 +21,9 @@ class Volume(Base):
     def delete(self, volume_name):
         return self.volume.delete(volume_name)
 
+    def wait_for_volume_deleted(self, volume_name):
+        return self.volume.wait_for_volume_deleted(volume_name)
+
     def attach(self, volume_name, node_name, disable_frontend):
         return self.volume.attach(volume_name, node_name, disable_frontend)
 
@@ -152,11 +155,11 @@ class Volume(Base):
     def activate(self, volume_name):
         return self.volume.activate(volume_name)
 
-    def create_persistentvolume(self, volume_name, retry):
-        return self.volume.create_persistentvolume(volume_name, retry)
+    def create_persistentvolume(self, volume_name):
+        return self.volume.create_persistentvolume(volume_name)
 
-    def create_persistentvolumeclaim(self, volume_name, retry):
-        return self.volume.create_persistentvolumeclaim(volume_name, retry)
+    def create_persistentvolumeclaim(self, volume_name):
+        return self.volume.create_persistentvolumeclaim(volume_name)
 
     def upgrade_engine_image(self, volume_name, engine_image_name):
         return self.volume.upgrade_engine_image(volume_name, engine_image_name)

@@ -93,7 +93,7 @@ class CRD(Base):
                 plural="volumes",
                 name=volume_name
             )
-            self.wait_for_volume_delete(volume_name)
+            self.wait_for_volume_deleted(volume_name)
         except Exception as e:
             logging(f"Deleting volume error: {e}")
 
@@ -208,8 +208,9 @@ class CRD(Base):
         volume = self.get(volume_name)
         return volume['metadata']['annotations'].get(annotation_key)
 
-    def wait_for_volume_delete(self, volume_name):
+    def wait_for_volume_deleted(self, volume_name):
         for i in range(self.retry_count):
+            logging(f"Waiting for volume {volume_name} deleted ... ({i})")
             try:
                 self.obj_api.get_namespaced_custom_object(
                     group="longhorn.io",
@@ -567,11 +568,11 @@ class CRD(Base):
     def activate(self, volume_name):
         return Rest().activate(volume_name)
 
-    def create_persistentvolume(self, volume_name, retry):
-        return Rest().create_persistentvolume(volume_name, retry)
+    def create_persistentvolume(self, volume_name):
+        return Rest().create_persistentvolume(volume_name)
 
-    def create_persistentvolumeclaim(self, volume_name, retry):
-        return Rest().create_persistentvolumeclaim(volume_name, retry)
+    def create_persistentvolumeclaim(self, volume_name):
+        return Rest().create_persistentvolumeclaim(volume_name)
 
     def upgrade_engine_image(self, volume_name, engine_image_name):
         return Rest().upgrade_engine_image(volume_name, engine_image_name)

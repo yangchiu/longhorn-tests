@@ -4,9 +4,6 @@ import asyncio
 
 from node_exec import NodeExec
 
-from persistentvolumeclaim.persistentvolumeclaim import PersistentVolumeClaim
-from persistentvolume.persistentvolume import PersistentVolume
-
 from volume.base import Base
 from volume.constant import DEV_PATH
 from volume.constant import VOLUME_FRONTEND_BLOCKDEV
@@ -23,8 +20,6 @@ class Rest(Base):
 
     def __init__(self):
         self.retry_count, self.retry_interval = get_retry_count_and_interval()
-        self.pv = PersistentVolume()
-        self.pvc = PersistentVolumeClaim()
 
     def get(self, volume_name):
         for i in range(self.retry_count):
@@ -348,7 +343,7 @@ class Rest(Base):
         assert engine.lastRestoredBackup == ""
         assert engine.requestedBackupRestore == ""
 
-    def create_persistentvolume(self, volume_name, retry):
+    def create_persistentvolume(self, volume_name):
         for _ in range(self.retry_count):
             try:
                 volume = self.get(volume_name)
@@ -361,18 +356,7 @@ class Rest(Base):
             raise AttributeError
         volume.pvCreate(pvName=volume_name, fsType="ext4")
 
-        if not retry:
-            return
-
-        created = False
-        for _ in range(self.retry_count):
-            if self.pv.is_exist(volume_name):
-                created = True
-                break
-            time.sleep(self.retry_interval)
-        assert created
-
-    def create_persistentvolumeclaim(self, volume_name, retry):
+    def create_persistentvolumeclaim(self, volume_name):
         for _ in range(self.retry_count):
             try:
                 volume = self.get(volume_name)
@@ -384,17 +368,6 @@ class Rest(Base):
         else:
             raise AttributeError
         volume.pvcCreate(namespace="default", pvcName=volume_name)
-
-        if not retry:
-            return
-
-        created = False
-        for _ in range(self.retry_count):
-            if self.pvc.is_exist(volume_name, namespace="default"):
-                created = True
-                break
-            time.sleep(self.retry_interval)
-        assert created
 
     def upgrade_engine_image(self, volume_name, engine_image_name):
         volume = self.get(volume_name)

@@ -54,6 +54,7 @@ class PersistentVolumeClaim():
                 namespace=namespace)
 
     def delete(self, name, namespace='default'):
+        volume_name = self.get_volume_name(name)
         api = client.CoreV1Api()
         try:
             api.delete_namespaced_persistent_volume_claim(
@@ -65,7 +66,8 @@ class PersistentVolumeClaim():
 
         retry_count, retry_interval = get_retry_count_and_interval()
         deleted = False
-        for _ in range(retry_count):
+        for i in range(retry_count):
+            logging(f"Waiting for pvc {name} deleted ... ({i})")
             if not self.is_exist(name, namespace):
                 deleted = True
                 break
@@ -81,6 +83,17 @@ class PersistentVolumeClaim():
                 exist = True
                 break
         return exist
+
+    def wait_for_created(self, name, namespace='default'):
+        created = False
+        retry_count, retry_interval = get_retry_count_and_interval()
+        for i in range(retry_count):
+            logging(f"Waiting for pvc {name} created ... ({i})")
+            if self.is_exist(name, namespace):
+                created = True
+                break
+            time.sleep(retry_interval)
+        assert created
 
     def get(self, claim_name):
         return self.claim.get(claim_name)

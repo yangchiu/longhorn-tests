@@ -200,6 +200,9 @@ class volume_keywords:
             ]
 
             done, pending = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
+            for task in done:
+                if task.exception():
+                    assert False, task.exception()
             logging(f"Observed {done.pop().get_name()} and {done.pop().get_name()} started replica rebuilding first")
 
         await wait_for_both_replica_rebuildings()
@@ -215,6 +218,9 @@ class volume_keywords:
             ]
 
             done, pending = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
+            for task in done:
+                if task.exception():
+                    assert False, task.exception()
             logging(f"Observed {done.pop().get_name()} started replica rebuilding")
 
         await wait_for_replica_rebuilding()
@@ -307,11 +313,11 @@ class volume_keywords:
     def activate_dr_volume(self, volume_name):
         self.volume.activate(volume_name)
 
-    def create_persistentvolume_for_volume(self, volume_name, retry=True):
-        self.volume.create_persistentvolume(volume_name, retry)
+    def create_persistentvolume_for_volume(self, volume_name):
+        self.volume.create_persistentvolume(volume_name)
 
-    def create_persistentvolumeclaim_for_volume(self, volume_name, retry=True):
-        self.volume.create_persistentvolumeclaim(volume_name, retry)
+    def create_persistentvolumeclaim_for_volume(self, volume_name):
+        self.volume.create_persistentvolumeclaim(volume_name)
 
     def record_volume_replica_names(self, volume_name):
         replica_list = self.replica.get(volume_name, node_name="")

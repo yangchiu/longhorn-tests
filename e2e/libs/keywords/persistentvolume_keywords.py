@@ -11,3 +11,7 @@ class persistentvolume_keywords:
     def delete_persistentvolume(self, name):
         logging(f'Deleting persistentvolume {name}')
         return self.pv.delete(name)
+
+    def wait_for_persistentvolume_created(self, name):
+        logging(f'Waiting for persistentvolume {name} created')
+        return self.pv.wait_for_created(name)

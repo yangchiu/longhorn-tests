@@ -4,7 +4,7 @@ from kubernetes import client
 from kubernetes.client.rest import ApiException
 
 from utility.utility import get_retry_count_and_interval
-
+from utility.utility import logging
 
 class PersistentVolume():
 
@@ -36,3 +36,13 @@ class PersistentVolume():
                 exist = True
                 break
         return exist
+
+    def wait_for_created(self, name):
+        created = False
+        for i in range(self.retry_count):
+            logging(f"Waiting for pv {name} created ... ({i})")
+            if self.is_exist(name):
+                created = True
+                break
+            time.sleep(self.retry_interval)
+        assert created

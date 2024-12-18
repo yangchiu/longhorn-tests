@@ -1366,7 +1366,8 @@ def test_csi_volumesnapshot_backing_image_basic(client, # NOQA
                                                 request, # NOQA
                                                 volume_name, # NOQA
                                                 volumesnapshotclass, # NOQA
-                                                volumesnapshot): # NOQA
+                                                volumesnapshot, # NOQA
+                                                storage_class):
     """
     Test Create/Delete BackingImage using VolumeSnapshot with a given Volume
 
@@ -1488,6 +1489,7 @@ def test_csi_volumesnapshot_backing_image_basic(client, # NOQA
                                 csivolsnap,
                                 restore_pvc_name,
                                 restore_pvc_size,
+                                storage_class,
                                 wait_for_restore=False)
 
     restore_pod = pod_make()

@@ -290,6 +290,7 @@ main(){
     generate_longhorn_yaml_manifest "${TF_VAR_tf_workspace}"
     install_longhorn_by_manifest "${TF_VAR_tf_workspace}/longhorn.yaml"
     run_longhorn_tests
+    sleep 86400
   fi
 }
 

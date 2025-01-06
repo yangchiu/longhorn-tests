@@ -8,7 +8,7 @@ THRESHOLD_IN_SEC=$((86400)) # if an instance exists more than 1 day, delete it.
 SUFFIX_ARR=()
 
 echo "[Step 1] Get all instances:"
-ALL_INSTANCES=$(aws ec2 describe-instances --filters Name=tag:Owner,Values=longhorn-infra | jq '.Reservations[].Instances[] | select(.State.Name != "terminated") | {LaunchTime: .LaunchTime, InstanceId: .InstanceId, Tags: .Tags}' | jq -c)
+ALL_INSTANCES=$(aws ec2 describe-instances --filters Name=tag:Owner,Values=longhorn-infra,longhorn-long-running | jq '.Reservations[].Instances[] | select(.State.Name != "terminated") | {LaunchTime: .LaunchTime, InstanceId: .InstanceId, Tags: .Tags}' | jq -c)
 for INSTANCE in ${ALL_INSTANCES[@]}; do
   INSTANCE_ID=$(echo "${INSTANCE}" | jq '.InstanceId' | tr -d '"')
   echo " * Instance ${INSTANCE_ID} ==>"

@@ -356,7 +356,7 @@ class Rest(Base):
         assert engine.lastRestoredBackup == ""
         assert engine.requestedBackupRestore == ""
 
-    def create_persistentvolume(self, volume_name, retry):
+    def create_persistentvolume(self, volume_name, sc_name, retry):
         for _ in range(self.retry_count):
             try:
                 volume = self.get(volume_name)
@@ -367,7 +367,7 @@ class Rest(Base):
             time.sleep(self.retry_interval)
         else:
             raise AttributeError
-        volume.pvCreate(pvName=volume_name, fsType="ext4")
+        volume.pvCreate(pvName=volume_name, fsType="ext4", storageClassName=sc_name)
 
         if not retry:
             return

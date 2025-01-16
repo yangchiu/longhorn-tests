@@ -94,16 +94,18 @@ def new_pod_manifest(pod_name="", image="", command=[], args=[],
     return manifest
 
 
-def new_busybox_manifest(pod_name, claim_name):
-    logging(f"Creating busybox pod {pod_name} using pvc {claim_name}")
+def new_busybox_manifest(pod_name, claim_name, node_name=None):
+    logging(f"Creating busybox pod {pod_name} on node {node_name} using pvc {claim_name}")
     filepath = "./templates/workload/pod.yaml"
     with open(filepath, 'r') as f:
         manifest_dict = yaml.safe_load(f)
         manifest_dict['spec']['volumes'][0]['persistentVolumeClaim']['claimName'] = claim_name
         manifest_dict['metadata']['name'] = pod_name
         manifest_dict['metadata']['labels']['app'] = pod_name
+        if node_name:
+            manifest_dict['spec']['nodeSelector'] = {}
+            manifest_dict['spec']['nodeSelector']['kubernetes.io/hostname'] = node_name
         return manifest_dict
-
 
 def create_pod(manifest, is_wait_for_pod_running=False):
     core_api = client.CoreV1Api()

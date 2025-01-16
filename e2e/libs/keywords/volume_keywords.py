@@ -322,8 +322,8 @@ class volume_keywords:
     def activate_dr_volume(self, volume_name):
         self.volume.activate(volume_name)
 
-    def create_persistentvolume_for_volume(self, volume_name, retry=True):
-        self.volume.create_persistentvolume(volume_name, retry)
+    def create_persistentvolume_for_volume(self, volume_name, sc_name="longhorn", retry=True):
+        self.volume.create_persistentvolume(volume_name, sc_name, retry)
 
     def create_persistentvolumeclaim_for_volume(self, volume_name, retry=True):
         self.volume.create_persistentvolumeclaim(volume_name, retry)

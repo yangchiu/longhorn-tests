@@ -6,6 +6,10 @@ Test Tags    negative
 Resource    ../keywords/variables.resource
 Resource    ../keywords/common.resource
 Resource    ../keywords/volume.resource
+Resource    ../keywords/workload.resource
+Resource    ../keywords/storageclass.resource
+Resource    ../keywords/persistentvolume.resource
+Resource    ../keywords/persistentvolumeclaim.resource
 Resource    ../keywords/host.resource
 Resource    ../keywords/longhorn.resource
 Resource    ../keywords/k8s.resource
@@ -395,3 +399,39 @@ Attempt To Attach To Three Nodes
     And Volume 0 should be attached to node 1
     When Attach volume 0 to node 2
     And Volume 0 should not be attached to node 2
+
+Heavy Writing Between Migration And Confirmation
+    Given Create volume 0 with    migratable=True    accessMode=RWX    dataEngine=${DATA_ENGINE}
+    And Create storageclass longhorn-migratable with    migratable=true    dataEngine=${DATA_ENGINE}
+    And Create persistentvolume for volume 0 with longhorn-migratable storageclass
+    And Create persistentvolumeclaim for volume 0
+
+    And Create pod 0 on node 0 using volume 0
+    And Wait for pod 0 running
+    And Keep writing data to pod 0
+
+    And Create pod 1 on node 1 using volume 0
+    And Wait for pod 1 running
+    And Wait for volume 0 migration to be ready
+
+    When Delete pod 0
+    Then Wait for volume 0 to migrate to node 1
+    And Check pod 1 works
+
+Heavy Writing Between Migration And Rollback
+    Given Create volume 0 with    migratable=True    accessMode=RWX    dataEngine=${DATA_ENGINE}
+    And Create storageclass longhorn-migratable with    migratable=true    dataEngine=${DATA_ENGINE}
+    And Create persistentvolume for volume 0 with longhorn-migratable storageclass
+    And Create persistentvolumeclaim for volume 0
+
+    And Create pod 0 on node 0 using volume 0
+    And Wait for pod 0 running
+    And Keep writing data to pod 0
+
+    And Create pod 1 on node 1 using volume 0
+    And Wait for pod 1 running
+    And Wait for volume 0 migration to be ready
+
+    When Delete pod 1
+    Then Wait for volume 0 to stay on node 0
+    And Check pod 0 works

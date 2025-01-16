@@ -571,8 +571,8 @@ class CRD(Base):
     def activate(self, volume_name):
         return Rest().activate(volume_name)
 
-    def create_persistentvolume(self, volume_name, retry):
-        return Rest().create_persistentvolume(volume_name, retry)
+    def create_persistentvolume(self, volume_name, sc_name, retry):
+        return Rest().create_persistentvolume(volume_name, sc_name, retry)
 
     def create_persistentvolumeclaim(self, volume_name, retry):
         return Rest().create_persistentvolumeclaim(volume_name, retry)

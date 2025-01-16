@@ -158,8 +158,8 @@ class Volume(Base):
     def activate(self, volume_name):
         return self.volume.activate(volume_name)
 
-    def create_persistentvolume(self, volume_name, retry):
-        return self.volume.create_persistentvolume(volume_name, retry)
+    def create_persistentvolume(self, volume_name, sc_name, retry):
+        return self.volume.create_persistentvolume(volume_name, sc_name, retry)
 
     def create_persistentvolumeclaim(self, volume_name, retry):
         return self.volume.create_persistentvolumeclaim(volume_name, retry)

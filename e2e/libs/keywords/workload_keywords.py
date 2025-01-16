@@ -42,9 +42,9 @@ class workload_keywords:
         self.persistentvolumeclaim = PersistentVolumeClaim()
         self.volume = Volume()
 
-    def create_pod(self, pod_name, claim_name):
-        logging(f'Creating pod {pod_name} using pvc {claim_name}')
-        create_pod(new_busybox_manifest(pod_name, claim_name))
+    def create_pod(self, pod_name, claim_name, node_name=None):
+        logging(f'Creating pod {pod_name} on node {node_name} using pvc {claim_name}')
+        create_pod(new_busybox_manifest(pod_name, claim_name, node_name))
 
     def delete_pod(self, pod_name, namespace='default', wait=True):
         logging(f'Deleting pod {pod_name} in namespace {namespace}')
@@ -115,6 +115,10 @@ class workload_keywords:
 
         logging(f'Checking checksum for file {file_name} in pod {pod_name}')
         check_pod_data_checksum(expected_checksum, pod_name, file_name)
+
+    def keep_writing_pod_data(self, pod_name):
+        logging(f'Keep writing data to pod {pod_name}')
+        keep_writing_pod_data(pod_name)
 
     def keep_writing_workload_pod_data(self, workload_name):
         pod_name = get_workload_pod_names(workload_name)[0]

@@ -209,6 +209,7 @@ def wait_for_workload_pods_running(workload_name, namespace="default"):
     retry_count, retry_interval = get_retry_count_and_interval()
     for i in range(retry_count):
         pods = get_workload_pods(workload_name, namespace=namespace)
+        logging(f"Waiting for {workload_name} pods {[pod.metadata.name for pod in pods]} running, retry ({i}) ...")
         if len(pods) > 0:
             running_pods = []
             for pod in pods:
@@ -216,8 +217,6 @@ def wait_for_workload_pods_running(workload_name, namespace="default"):
                     running_pods.append(pod.metadata.name)
             if len(running_pods) == len(pods):
                 return
-
-        logging(f"Waiting for {workload_name} pods {running_pods} running, retry ({i}) ...")
         time.sleep(retry_interval)
 
     assert False, f"Timeout waiting for {workload_name} pods running"

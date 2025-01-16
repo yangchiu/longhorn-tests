@@ -336,6 +336,10 @@ Create persistentvolume for volume ${volume_id}
     ${volume_name} =    generate_name_with_suffix    volume    ${volume_id}
     create_persistentvolume_for_volume    ${volume_name}
 
+Create persistentvolume for volume ${volume_id} with ${sc_name} storageclass
+    ${volume_name} =    generate_name_with_suffix    volume    ${volume_id}
+    create_persistentvolume_for_volume    ${volume_name}    ${sc_name}
+
 Create persistentvolumeclaim for volume ${volume_id}
     ${volume_name} =    generate_name_with_suffix    volume    ${volume_id}
     create_persistentvolumeclaim_for_volume    ${volume_name}

@@ -141,7 +141,7 @@ class Base(ABC):
         return NotImplemented
 
     @abstractmethod
-    def create_persistentvolume(self, volume_name, retry):
+    def create_persistentvolume(self, volume_name, sc_name, retry):
         return NotImplemented
 
     @abstractmethod

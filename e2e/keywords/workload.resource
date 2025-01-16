@@ -16,13 +16,28 @@ Create pod ${pod_id} using volume ${volume_id}
     ${claim_name} =    generate_name_with_suffix    volume    ${volume_id}
     create_pod    ${pod_name}    ${claim_name}
 
+Create pod ${pod_id} on node ${node_id} using volume ${volume_id}
+    ${pod_name} =    generate_name_with_suffix    pod    ${pod_id}
+    ${node_name} =    get_node_by_index    ${node_id}
+    ${claim_name} =    generate_name_with_suffix    volume    ${volume_id}
+    create_pod    ${pod_name}    ${claim_name}    ${node_name}
+
 Wait for pod ${pod_id} running
     ${pod_name} =    generate_name_with_suffix    pod    ${pod_id}
     wait_for_workload_pods_running    ${pod_name}
 
+Check pod ${pod_id} works
+    ${pod_name} =    generate_name_with_suffix    pod    ${pod_id}
+    write_pod_random_data    ${pod_name}    1024    random-data
+    check_pod_data_checksum    ${pod_name}    random-data
+
 Delete pod ${pod_id}
     ${pod_name} =    generate_name_with_suffix    pod    ${pod_id}
     delete_pod    ${pod_name}
+
+Keep writing data to pod ${pod_id}
+    ${pod_name} =    generate_name_with_suffix    pod    ${pod_id}
+    keep_writing_pod_data    ${pod_name}
 
 Keep writing data to pod of ${workload_kind} ${workload_id}
     ${workload_name} =   generate_name_with_suffix    ${workload_kind}    ${workload_id}

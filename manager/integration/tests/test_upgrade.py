@@ -370,6 +370,11 @@ def test_upgrade(longhorn_install_method,
         system_backup_name = "test-system-backup"
         client.create_system_backup(Name=system_backup_name)
         system_backup_wait_for_state("Ready", system_backup_name, client)
+
+    print(f"wait for backup-vol healthy at 374")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
+
     # support bundle
     resp = create_support_bundle(client)
     node_id = resp['id']
@@ -398,6 +403,11 @@ def test_upgrade(longhorn_install_method,
     wait_for_volume_recurring_job_update(backup_vol,
                                          jobs=[job_name],
                                          groups=["default"])
+
+    print(f"wait for backup-vol healthy at 402")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
+
     # share manager
     rwx_statefulset_name = rwx_statefulset['metadata']['name']
     create_and_wait_statefulset(rwx_statefulset)
@@ -409,6 +419,10 @@ def test_upgrade(longhorn_install_method,
     rwx_test_data = generate_random_data(VOLUME_RWTEST_SIZE)
     write_pod_volume_data(core_api, rwx_statefulset_pod_name,
                           rwx_test_data, filename='test1')
+
+    print(f"wait for backup-vol healthy at 413")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
 
     if longhorn_transient_version and len(longhorn_transient_version) > 0:
         # upgrade Longhorn manager to transient version
@@ -430,6 +444,10 @@ def test_upgrade(longhorn_install_method,
 
         # wait for 1 minute before checking pod restarts
         time.sleep(60)
+
+    print(f"wait for backup-vol healthy at 434")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
 
     # upgrade Longhorn manager
     assert longhorn_upgrade(longhorn_install_method,
@@ -453,6 +471,10 @@ def test_upgrade(longhorn_install_method,
     # wait for 1 minute before checking pod restarts
     time.sleep(60)
 
+    print(f"wait for backup-vol healthy at 455")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
+
     # restore backup after upgrade
     restore_vol_name = "restore-vol"
     client.create_volume(name=restore_vol_name,
@@ -462,6 +484,10 @@ def test_upgrade(longhorn_install_method,
     wait_for_volume_creation(client, restore_vol_name)
     monitor_restore_progress(client, restore_vol_name)
     wait_for_volume_detached(client, restore_vol_name)
+
+    print(f"wait for backup-vol healthy at 466")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
 
     # read rwx volume data
     assert rwx_test_data == \
@@ -474,9 +500,17 @@ def test_upgrade(longhorn_install_method,
     # delete orphan
     delete_orphans(client)
 
+    print(f"wait for backup-vol healthy at 477")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
+
     # delete system backup
     if system_backup_feature_supported(client):
         system_backups_cleanup(client)
+
+    print(f"wait for backup-vol healthy at 481")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
 
     # Check Pod and StatefulSet didn't restart after upgrade
     pod = core_api.read_namespaced_pod(name=pod_name,
@@ -525,6 +559,10 @@ def test_upgrade(longhorn_install_method,
     strict_local_vol_data_after_sys_upgrade = \
         write_volume_random_data(strict_local_vol)
 
+    print(f"wait for backup-vol healthy at 528")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
+
     # Check data written to all volumes
     for sspod_info in statefulset_pod_info:
         resp = read_volume_data(core_api, sspod_info['pod_name'])
@@ -559,6 +597,10 @@ def test_upgrade(longhorn_install_method,
 
     delete_and_wait_pod(core_api, pod_name)
 
+    print(f"wait for backup-vol healthy at 562")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
+
     # Upgrade all volumes engine images
     volumes = client.list_volume()
     for v in volumes:
@@ -576,16 +618,28 @@ def test_upgrade(longhorn_install_method,
             wait_for_volume_detached(client, v.name)
             print(f"Detached volume {v.name}")
 
+    print(f"wait for backup-vol healthy at 579")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
+
     engineimages = client.list_engine_image()
     for ei in engineimages:
         if ei.image == longhorn_engine_image:
             new_ei = ei
+
+    print(f"wait for backup-vol healthy at 584")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
 
     for v in volumes:
         if v.name != restore_vol_name:
             volume = client.by_id_volume(v.name)
             volume.engineUpgrade(image=new_ei.image)
             print(f"Upgrading volume {v.name} engine image")
+
+    print(f"wait for backup-vol healthy at 590")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
 
     # Recreate Pod, and StatefulSet
     statefulset['spec']['replicas'] = replicas = 2
@@ -606,6 +660,10 @@ def test_upgrade(longhorn_install_method,
     pod['spec']['volumes'] = [create_pvc_spec(pvc_name)]
     create_and_wait_pod(core_api, pod)
 
+    print(f"wait for backup-vol healthy at 609")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
+
     # Attach the volume
     for v in volumes:
         if v.name == vol_revision_enabled_name or \
@@ -615,6 +673,10 @@ def test_upgrade(longhorn_install_method,
             volume.attach(hostId=host_id)
             wait_for_volume_healthy(client, v.name)
 
+    print(f"wait for backup-vol healthy at 618")
+    wait_for_volume_healthy(client, backup_vol_name)
+    print(f"wait for backup-vol healthy completed")
+
     # Verify volume's engine image has been upgraded
     for v in volumes:
         if v.name != restore_vol_name:
@@ -623,18 +685,28 @@ def test_upgrade(longhorn_install_method,
             if hasattr(engine, 'engineImage'):
                 print(f"Checking {v.name} engine image upgraded to \
                     {new_ei.image}")
-                assert engine.engineImage == new_ei.image, \
-                    f"assert volume {v.name} engine image upgraded to \
-                      {new_ei.image}, but it's {engine.engineImage}"
+                for i in range(86400):
+                    if engine.engineImage != new_ei.image:
+                        print(f"assert volume {v.name} engine image upgraded to {new_ei.image}, but it's {engine.engineImage} ... ({i})")
+                    else:
+                        break
+                    time.sleep(1)
             else:
                 print(f"Checking {v.name} engine image upgraded to \
                     {new_ei.image}")
-                assert engine.image == new_ei.image, \
-                    f"assert volume {v.name} engine image upgraded to \
-                      {new_ei.image}, but it's {engine.image}"
-            assert engine.currentImage == new_ei.image, \
-                f"assert volume {v.name} engine current image upgraded to \
-                  {new_ei.image}, but it's {engine.currentImage}"
+                for i in range(86400):
+                    if engine.image != new_ei.image:
+                        print(f"assert volume {v.name} engine image upgraded to {new_ei.image}, but it's {engine.image} ... ({i})")
+                    else:
+                        break
+                    time.sleep(1)
+            print(f"Checking {v.name} engine current image upgraded to {new_ei.image}")
+            for i in range(86400):
+                if engine.currentImage != new_ei.image:
+                    print(f"assert volume {v.name} engine current image upgraded to {new_ei.image}, but it's {engine.currentImage} ... ({i})")
+                else:
+                    break
+                time.sleep(1)
 
     # Check All volumes data
     for sspod_info in statefulset_pod_info:

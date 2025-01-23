@@ -26,6 +26,36 @@ set_kubeconfig_envvar(){
     gcloud container clusters get-credentials `terraform -chdir=${TF_VAR_tf_workspace}/terraform output -raw cluster_name` --zone `terraform -chdir=${TF_VAR_tf_workspace}/terraform output -raw cluster_zone` --project ${TF_VAR_gcp_project}
 }
 
+print_out_cluster_info(){
+  gcloud container clusters describe `terraform -chdir=${TF_VAR_tf_workspace}/terraform output -raw cluster_name` --zone `terraform -chdir=${TF_VAR_tf_workspace}/terraform output -raw cluster_zone` --format="value(currentNodeVersion)"
+  kubectl run print-os-release --rm -it --image=alpine --overrides='
+{
+  "spec": {
+    "containers": [
+      {
+        "name": "print-os-release",
+        "image": "alpine",
+        "command": ["/bin/sh", "-c", "cat /mnt/etc/os-release"],
+        "volumeMounts": [
+          {
+            "name": "host-etc",
+            "mountPath": "/mnt/etc"
+          }
+        ]
+      }
+    ],
+    "volumes": [
+      {
+        "name": "host-etc",
+        "hostPath": {
+          "path": "/etc"
+        }
+      }
+    ]
+  }
+}' -- /bin/sh
+}
+
 
 install_csi_snapshotter_crds(){
     CSI_SNAPSHOTTER_REPO_URL="https://github.com/kubernetes-csi/external-snapshotter.git"

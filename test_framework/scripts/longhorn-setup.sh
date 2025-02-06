@@ -32,6 +32,8 @@ create_admin_service_account(){
   kubectl apply -f "${TF_VAR_tf_workspace}/templates/kubeconfig_service_account.yaml"
   TOKEN=$(kubectl -n kube-system get secret/kubeconfig-cluster-admin-token -o=go-template='{{.data.token}}' | base64 -d)
   yq -i ".users[0].user.token=\"${TOKEN}\""  "${TF_VAR_tf_workspace}/eks.yml"
+  cat "${TF_VAR_tf_workspace}/eks.yml"
+  sleep 86400
 }
 
 

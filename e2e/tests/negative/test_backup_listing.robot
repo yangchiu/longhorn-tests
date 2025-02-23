@@ -21,14 +21,11 @@ Resource    ../keywords/backup.resource
 Test Setup    Set test environment
 Test Teardown    Cleanup test resources
 
-*** Variables ***
-${LOOP_COUNT}    1001
 
 *** Keywords ***
-Verify backup ${backup_id} count for ${workload_kind} ${workload_id} volume 
+Verify backup ${expected_backup_count} count for ${workload_kind} ${workload_id} volume
     ${workload_name}=   generate_name_with_suffix    ${workload_kind}    ${workload_id}
     ${volume_name}=    get_workload_volume_name    ${workload_name}
-    ${expected_backup_count}=  Evaluate  ${backup_id} + 1
     verify_backup_count    ${volume_name}    ${expected_backup_count}
 
 Create volume ${volume_id} from ${workload_kind} ${workload_id} volume random backup
@@ -36,7 +33,7 @@ Create volume ${volume_id} from ${workload_kind} ${workload_id} volume random ba
     ${workload_name}=   generate_name_with_suffix    ${workload_kind}    ${workload_id}
     ${workload_volume_name}=    get_workload_volume_name    ${workload_name}
     ${volume_name}=    generate_name_with_suffix    volume    ${volume_id}
-    ${backup_id}=  Evaluate  random.randint(0, ${LOOP_COUNT}-1)
+    ${backup_id}=  Evaluate  random.randint(1, 1001)
     ${backup_id}=  Convert To String  ${backup_id}
     ${backup_url}=    get_backup_url    ${backup_id}    ${workload_volume_name}
     create_volume   ${volume_name}    size=3Gi    numberOfReplicas=3    fromBackup=${backup_url}    dataEngine=${DATA_ENGINE}
@@ -79,7 +76,7 @@ Volume ${volume_id} data should same as ${workload_kind} ${workload_id} volume
     Should Be Equal  ${current_file_checksum}  ${expected_file_checksum}
 
 Perform backup 1001 times for deployment 0 volume
-    FOR    ${i}    IN RANGE    ${LOOP_COUNT}
+    FOR    ${i}    IN RANGE    1    1001
         Create backup ${i} for deployment 0 volume
         Delete snapshot ${i} of deployment 0 volume
         IF    ${i} % 249 == 0

@@ -25,6 +25,7 @@ class Rest(Base):
         snapshot_created = False
         for i in range(self.retry_count):
             snapshots = volume.snapshotList().data
+            logging(f"===> snapshot count = {len(snapshots)}")
             for vs in snapshots:
                 if vs.name == snap_name:
                     snapshot_created = True
@@ -32,9 +33,10 @@ class Rest(Base):
                     break
             if snapshot_created is True:
                 break
+            logging(f"Waiting for snapshot {snap_name} for volume {volume_name} to be created ... ({i})")
             time.sleep(self.retry_interval)
 
-        assert snapshot_created
+        assert snapshot_created, f"Failed to create snapshot {snap_name} for volume {volume_name}: {snapshots}"
 
         self.set_snapshot_id(snap_name, snapshot_id)
 
@@ -61,6 +63,14 @@ class Rest(Base):
         logging(f"Deleting volume {volume_name} snapshot {snapshot_id}")
         snapshot = self.get(volume_name, snapshot_id)
         self.volume.get(volume_name).snapshotDelete(name=snapshot.name)
+        for i in range(self.retry_count):
+            logging(f"Waiting for snapshot {snapshot.name} of volume {volume_name} to be deleted ... ({i})")
+            snapshots = self.list(volume_name)
+            for s in snapshots:
+                if s.name == snapshot.name and s.markRemoved:
+                    return
+            time.sleep(self.retry_interval)
+        assert False, f"Failed to delete snapshot {snapshot_id} {snapshot.name} of volume {volume_name}"
 
     def revert(self, volume_name, snapshot_id):
         logging(f"Reverting volume {volume_name} to snapshot {snapshot_id}")
@@ -77,6 +87,7 @@ class Rest(Base):
         last_purge_progress = {}
         purge_status = {}
         for i in range(self.retry_count):
+            logging(f"Waiting for purging volume {volume_name} snapshot to be completed ... ({i})")
             completed = 0
             volume = self.volume.get(volume_name)
             purge_status = volume.purgeStatus
@@ -97,6 +108,9 @@ class Rest(Base):
                 break
             time.sleep(self.retry_interval)
         assert completed == len(purge_status)
+
+        snapshots = volume.snapshotList().data
+        logging(f"Got snapshot count = {len(snapshots)} after purge")
 
     def is_parent_of(self, volume_name, parent_id, child_id):
         logging(f"Checking volume {volume_name} snapshot {parent_id} is parent of snapshot {child_id}")

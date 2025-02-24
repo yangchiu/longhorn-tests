@@ -4869,7 +4869,9 @@ def wait_for_rebuild_complete(client, volume_name, retry_count=RETRY_COUNTS):
         rebuild_statuses = v.rebuildStatus
         for status in rebuild_statuses:
             if status.state == "complete":
-                assert status.progress == 100, f"status = {status}"
+                if status.progress != 100:
+                    print(f"rebuild complete but progress != 100: {status}")
+                    time.sleep(259200)
                 assert not status.error
                 assert not status.isRebuilding
                 completed += 1

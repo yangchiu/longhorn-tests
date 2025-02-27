@@ -53,9 +53,11 @@ main(){
         UPGRADE_LH_ENGINE_IMAGE="longhornio/longhorn-engine:v${RAW_VERSION[1]}"
       fi
     run_longhorn_upgrade_test
+    sleep 86400
     run_longhorn_test
   else
     install_longhorn_rancher_chart
+    sleep 86400
     run_longhorn_test
   fi
 }

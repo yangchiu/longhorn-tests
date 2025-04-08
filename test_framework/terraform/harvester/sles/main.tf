@@ -25,6 +25,10 @@ data "rancher2_cluster_v2" "hal-cluster" {
   name = "hal"
 }
 
+locals {
+  image_name = var.arch == "amd64" ? "longhorn-qa/image-pqjk7" : "longhorn-qa/image-q5srb"
+}
+
 resource "rancher2_cloud_credential" "e2e-credential" {
   name = "e2e-credential-${random_string.random_suffix.id}"
   harvester_credential_config {
@@ -48,7 +52,7 @@ resource "rancher2_machine_config_v2" "e2e-machine-config-controlplane" {
     disk_info = <<EOF
     {
         "disks": [{
-            "imageName": "longhorn-qa/image-pqjk7",
+            "imageName": "${local.image_name}",
             "size": 100,
             "bootOrder": 1
         }]
@@ -95,7 +99,7 @@ resource "rancher2_machine_config_v2" "e2e-machine-config-worker" {
     disk_info = <<EOF
     {
         "disks": [{
-            "imageName": "longhorn-qa/image-pqjk7",
+            "imageName": "${local.image_name}",
             "size": 100,
             "bootOrder": 1
         },

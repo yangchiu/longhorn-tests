@@ -52,3 +52,8 @@ variable "registration_code" {
   type    = string
   sensitive   = true
 }
+
+variable "disk_size" {
+  type        = number
+  default     = 40
+}

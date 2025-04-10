@@ -49,7 +49,7 @@ resource "rancher2_machine_config_v2" "e2e-machine-config-controlplane" {
     {
         "disks": [{
             "imageName": "longhorn-qa/image-pqjk7",
-            "size": 100,
+            "size": 40,
             "bootOrder": 1
         }]
     }
@@ -96,12 +96,12 @@ resource "rancher2_machine_config_v2" "e2e-machine-config-worker" {
     {
         "disks": [{
             "imageName": "longhorn-qa/image-pqjk7",
-            "size": 100,
+            "size": ${var.disk_size},
             "bootOrder": 1
         },
         {
             "storageClassName": "harvester-longhorn",
-            "size": 100,
+            "size": ${var.disk_size},
             "bootOrder": 2
         }]
     }

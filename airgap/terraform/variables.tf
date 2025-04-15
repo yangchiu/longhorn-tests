@@ -31,12 +31,10 @@ variable "registry_aws_instance_type" {
 
 variable "docker_hub_username" {
   type = string
-  sensitive = true
 }
 
 variable "docker_hub_password" {
   type = string
-  sensitive = true
 }
 
 variable "longhorn_version" {
@@ -52,4 +50,15 @@ variable "aws_ssh_public_key_file_path" {
 variable "aws_ssh_private_key_file_path" {
   type        = string
   default     = "~/.ssh/id_rsa"
+}
+
+variable "appco_test" {
+  type = string
+  default = "false"
+}
+
+variable "arch" {
+  type        = string
+  description = "available values (amd64, arm64)"
+  default     = "amd64"
 }

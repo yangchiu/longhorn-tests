@@ -30,11 +30,12 @@ class Rest(Base):
         for i in range(self.retry_count):
             bi = get_longhorn_client().by_id_backing_image(name)
             if len(bi.diskFileStatusMap) > 0 and bi.currentChecksum != "":
+                ready_copies = 0
                 for disk, status in iter(bi.diskFileStatusMap.items()):
                     if status.state == self.BACKING_IMAGE_STATE_READY:
-                        ready = True
-                        break
-            if ready:
+                        ready_copies += 1
+            logging(f"Waiting for backing image {name} has {minNumberOfCopies} copies, currently it's {ready_copies} ... ({i})")
+            if ready_copies == minNumberOfCopies:
                 break
             time.sleep(self.retry_interval)
 

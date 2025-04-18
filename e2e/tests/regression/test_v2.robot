@@ -124,19 +124,15 @@ Test Creating V2 Volume With Backing Image After Replica Rebuilding
     And Wait for volume 0 healthy
     And Write data 0 to volume 0
 
-    Given Create backing image bi-v2 with    url=https://longhorn-backing-image.s3-us-west-1.amazonaws.com/parrot.qcow2    dataEngine=v2
-    When Create volume 1 with    size=3Gi    backingImage=bi-v2    dataEngine=v2
-    And Attach volume 1
-    And Wait for volume 1 healthy
-    Then Check volume 1 works
+    And Create backing image bi-v2 with    url=https://longhorn-backing-image.s3-us-west-1.amazonaws.com/parrot.qcow2    dataEngine=v2
 
     When Delete volume 0 replica on node 1
-    Then Wait until volume 0 replica rebuilding started on node 1
+    And Wait until volume 0 replica rebuilding started on node 1
     And Wait until volume 0 replica rebuilding completed on node 1
     And Wait for volume 0 healthy
     Then Check volume 0 data is data 0
 
-    When Create volume 2 with    size=3Gi    backingImage=bi-v2    dataEngine=v2
-    And Attach volume 2
-    And Wait for volume 2 healthy
-    Then Check volume 2 works
+    When Create volume 1 with    size=3Gi    backingImage=bi-v2    dataEngine=v2
+    And Attach volume 1
+    And Wait for volume 1 healthy
+    Then Check volume 1 works

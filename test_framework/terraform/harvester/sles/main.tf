@@ -32,6 +32,9 @@ resource "rancher2_cloud_credential" "e2e-credential" {
     cluster_type = "imported"
     kubeconfig_content = data.rancher2_cluster_v2.hal-cluster.kube_config
   }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "rancher2_machine_config_v2" "e2e-machine-config-controlplane" {

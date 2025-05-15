@@ -108,7 +108,7 @@ install_longhorn_custom(){
 uninstall_longhorn(){
   LONGHORN_NAMESPACE="longhorn-system"
   UNINSTALL_VERSION="${1:-$LONGHORN_REPO_BRANCH}"
-  kubectl create -f "https://raw.githubusercontent.com/longhorn/longhorn/${UNINSTALL_VERSION}/uninstall/uninstall.yaml"
+  kubectl create -f "https://raw.githubusercontent.com/yangchiu/longhorn/refs/heads/uninstall-test-3/uninstall/uninstall.yaml"
   kubectl wait --for=condition=complete job/longhorn-uninstall -n "${LONGHORN_NAMESPACE}" --timeout=10m
   exit_code=$?
   kubectl get job/longhorn-uninstall -n "${LONGHORN_NAMESPACE}"

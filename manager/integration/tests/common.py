@@ -2025,6 +2025,10 @@ def wait_for_volume_detached_unknown(client, name):
                            VOLUME_ROBUSTNESS_UNKNOWN)
     return wait_for_volume_detached(client, name)
 
+def wait_for_volume_unknown(client, name):
+    return wait_for_volume_status(client, name,
+                           VOLUME_FIELD_ROBUSTNESS,
+                           VOLUME_ROBUSTNESS_UNKNOWN)
 
 def wait_for_volume_healthy(client, name, retry_count=RETRY_COUNTS):
     wait_for_volume_status(client, name,

@@ -6,6 +6,8 @@ from common import client, core_api, volume_name # NOQA
 from common import SIZE
 from common import check_volume_data, get_self_host_id
 from common import wait_for_volume_current_image, wait_for_volume_delete
+from common import wait_for_volume_unknown
+from common import wait_for_volume_attached
 from common import wait_for_volume_detached
 from common import wait_for_engine_image_deletion
 from common import wait_for_engine_image_ref_count, wait_for_engine_image_state
@@ -1239,7 +1241,8 @@ def test_engine_crash_during_live_upgrade(client, core_api, # NOQA
     crash_engine_process_with_sigkill(client, core_api, volume_name)
 
     # Step 4, 5
-    volume = wait_for_volume_detached(client, volume_name)
+    volume = wait_for_volume_unknown(client, volume_name)
+    volume = wait_for_volume_attached(client, volume_name)
     volume = wait_for_volume_current_image(client, volume_name,
                                            engine_upgrade_image)
     wait_for_engine_image_ref_count(client, default_img_name, 0)

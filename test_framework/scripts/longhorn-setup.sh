@@ -50,11 +50,10 @@ enable_mtls(){
 
 
 main(){
-  if [[ ${LONGHORN_TEST_CLOUDPROVIDER} == "harvester" ]]; then
-    sleep 300s
-  fi
-
   set_kubeconfig
+  if [[ ${LONGHORN_TEST_CLOUDPROVIDER} == "harvester" ]]; then
+    wait_for_k8s_api_server_stable
+  fi
 
   create_longhorn_namespace
 

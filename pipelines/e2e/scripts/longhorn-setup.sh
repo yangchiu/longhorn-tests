@@ -22,6 +22,9 @@ LONGHORN_INSTALL_METHOD="manifest"
 
 main(){
   set_kubeconfig
+  if [[ ${LONGHORN_TEST_CLOUDPROVIDER} == "harvester" ]]; then
+    wait_for_k8s_api_server_stable
+  fi
 
   if [[ ${DISTRO} == "rhel" ]] || [[ ${DISTRO} == "rockylinux" ]] || [[ ${DISTRO} == "oracle" ]]; then
     apply_selinux_workaround

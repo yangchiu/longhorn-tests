@@ -25,3 +25,21 @@ set_kubeconfig(){
     export KUBECONFIG="${PWD}/test_framework/terraform/${LONGHORN_TEST_CLOUDPROVIDER}/${DISTRO}/k3s.yaml"
   fi
 }
+
+wait_for_k8s_api_server_stable(){
+  stable_count=0
+  while true; do
+    result=$(kubectl get --raw /healthz)
+    if [[ "$result" == "ok" ]]; then
+      stable_count=$((stable_count + 1))
+      if [[ $stable_count -ge 10 ]]; then
+        echo "K8s API server is stable!"
+        break
+      fi
+    else
+      echo "K8s API server unhealthy: $result"
+      stable_count=0
+    fi
+    sleep 10
+  done
+}

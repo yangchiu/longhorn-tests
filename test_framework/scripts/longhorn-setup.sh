@@ -50,11 +50,13 @@ enable_mtls(){
 
 
 main(){
-  if [[ ${LONGHORN_TEST_CLOUDPROVIDER} == "harvester" ]]; then
-    sleep 300s
-  fi
-
   set_kubeconfig
+
+  # msg="failed to get package manager" error="operating systems amzn are not supported"
+  if [[ "${TF_VAR_k8s_distro_name}" != "eks" ]] && \
+    [[ "${DISTRO}" != "talos" ]]; then
+    longhornctl_check
+  fi
 
   create_longhorn_namespace
 
@@ -87,12 +89,6 @@ main(){
   fi
 
   scale_up_coredns
-
-  # msg="failed to get package manager" error="operating systems amzn are not supported"
-  if [[ "${TF_VAR_k8s_distro_name}" != "eks" ]] && \
-    [[ "${DISTRO}" != "talos" ]]; then
-    longhornctl_check
-  fi
 
   if [[ "${DISTRO}" == "talos" ]]; then
     install_metrics_server

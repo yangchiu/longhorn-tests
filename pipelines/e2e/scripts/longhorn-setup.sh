@@ -23,6 +23,12 @@ LONGHORN_INSTALL_METHOD="manifest"
 main(){
   set_kubeconfig
 
+  # msg="failed to get package manager" error="operating systems amzn are not supported"
+  if [[ "${TF_VAR_k8s_distro_name}" != "eks" ]] && \
+    [[ "${DISTRO}" != "talos" ]]; then
+    longhornctl_check
+  fi
+
   if [[ ${DISTRO} == "rhel" ]] || [[ ${DISTRO} == "rockylinux" ]] || [[ ${DISTRO} == "oracle" ]]; then
     apply_selinux_workaround
   fi
@@ -41,12 +47,6 @@ main(){
   install_csi_snapshotter
 
   scale_up_coredns
-
-  # msg="failed to get package manager" error="operating systems amzn are not supported"
-  if [[ "${TF_VAR_k8s_distro_name}" != "eks" ]] && \
-    [[ "${DISTRO}" != "talos" ]]; then
-    longhornctl_check
-  fi
 
   if [[ "${DISTRO}" == "talos" ]]; then
     install_metrics_server

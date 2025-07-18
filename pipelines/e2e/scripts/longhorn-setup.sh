@@ -23,6 +23,11 @@ LONGHORN_INSTALL_METHOD="manifest"
 main(){
   set_kubeconfig
 
+  if [[ "${LONGHORN_TEST_CLOUDPROVIDER}" == "harvester" ]]; then
+    echo "LONGHORN_TEST_CLOUDPROVIDER is harvester. Sleeping for 300 seconds..."
+    sleep 300s
+  fi
+
   if [[ ${DISTRO} == "rhel" ]] || [[ ${DISTRO} == "rockylinux" ]] || [[ ${DISTRO} == "oracle" ]]; then
     apply_selinux_workaround
   fi

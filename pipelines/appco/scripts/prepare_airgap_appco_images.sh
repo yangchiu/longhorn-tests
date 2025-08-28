@@ -56,13 +56,13 @@ mirror_longhorn_images(){
   # Pull images
   for image in "${IMAGES[@]}"; do
     echo "Pulling ${image}"
-    docker pull --platform linux/${TF_VAR_arch} "${image}"
+    docker pull --platform linux/${TF_VAR_arch} "${image%-*}"
   done
 
   # Tag images
   for image in "${IMAGES[@]}"; do
-    echo "Tagging ${image} to ${REGISTRY_URL}/${image}"
-    docker tag "${image}" "${REGISTRY_URL}/${image}"
+    echo "Tagging ${image%-*} to ${REGISTRY_URL}/${image}"
+    docker tag "${image%-*}" "${REGISTRY_URL}/${image}"
   done
 
   # Login

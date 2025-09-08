@@ -93,7 +93,9 @@ install_longhorn_custom(){
 
 uninstall_longhorn(){
   LONGHORN_NAMESPACE="longhorn-system"
-  helm uninstall longhorn --namespace "${LONGHORN_NAMESPACE}"
+  nohup helm uninstall longhorn --namespace "${LONGHORN_NAMESPACE}" > helm-uninstall.log 2>&1 &
+  kubectl logs job/longhorn-uninstall -n "${LONGHORN_NAMESPACE}" -f
+  kubectl get pods -n "${LONGHORN_NAMESPACE}"
   kubectl delete ns "${LONGHORN_NAMESPACE}"
 }
 

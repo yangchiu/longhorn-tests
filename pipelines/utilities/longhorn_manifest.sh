@@ -118,6 +118,7 @@ uninstall_longhorn(){
   exit_code=$?
   kubectl get job/longhorn-uninstall -n "${LONGHORN_NAMESPACE}"
   kubectl logs job/longhorn-uninstall -n "${LONGHORN_NAMESPACE}" -f
+  kubectl get pods -n "${LONGHORN_NAMESPACE}"
   exit $exit_code
 }
 

@@ -92,7 +92,7 @@ if os.uname().machine == "x86_64":
     if os.environ.get("CLOUDPROVIDER") == "harvester":
         BLOCK_DEV_PATH = "/dev/vdc"
     else:
-        BLOCK_DEV_PATH = "/dev/xvdh"
+        BLOCK_DEV_PATH = "/dev/nvme1n1"
 else:
     BLOCK_DEV_PATH = "/dev/nvme1n1"
 
@@ -2420,6 +2420,26 @@ def delete_replica_processes(client, api, volname):
         exec_instance_manager(api, rm_name, delete_command)
 
 
+def delete_instance_managers(client, api, nodes=None):
+    instance_managers = client.list_instance_manager()
+    if not nodes:
+        for im in instance_managers:
+            if im.dataEngine == DATA_ENGINE:
+                api.delete_namespaced_pod(
+                    name=im.name,
+                    namespace=LONGHORN_NAMESPACE,
+                    grace_period_seconds=0
+                )
+    else:
+        for im in instance_managers:
+            if im.nodeID in nodes and im.dataEngine == DATA_ENGINE:
+                api.delete_namespaced_pod(
+                    name=im.name,
+                    namespace=LONGHORN_NAMESPACE,
+                    grace_period_seconds=0
+                )
+
+
 class AssertErrorCheckThread(threading.Thread):
     """
         This class is used for catching exception caused in threads,
@@ -3475,7 +3495,7 @@ def monitor_restore_progress(client, volume_name):
         if completed == len(rs):
             break
         time.sleep(RETRY_INTERVAL)
-    assert completed == len(rs)
+    assert completed == len(rs), rs
     return v
 
 
@@ -5042,7 +5062,7 @@ def wait_for_backup_restore_completed(client, name, backup_name):
             complete = True
             break
         time.sleep(RETRY_INTERVAL_LONG)
-    assert complete
+    assert complete, v
 
 
 def wait_for_volume_restoration_start(client, volume_name, backup_name,
@@ -6822,9 +6842,9 @@ def wait_for_all_nodes_disks_schedulable(client):
                 if not schedulable:
                     print(f"'{disk_name}' on '{node_name}' is not schedulable")
                     all_disks_ready = False
-        if all_disks_ready:
-            return
         time.sleep(RETRY_INTERVAL_LONG)
+        if all_disks_ready:
+            break
 
     raise TimeoutError(
         f"Not all disks across all nodes reached Schedulable=True "

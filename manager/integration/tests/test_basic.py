@@ -55,7 +55,7 @@ from common import fix_replica_expansion_failure
 from common import wait_for_volume_restoration_start
 from common import write_pod_volume_random_data, get_pod_data_md5sum
 from common import prepare_pod_with_data_in_mb, exec_command_in_pod
-from common import crash_replica_processes
+from common import delete_instance_managers
 from common import wait_for_volume_condition_scheduled
 from common import wait_for_volume_condition_restore
 from common import wait_for_volume_condition_toomanysnapshots
@@ -753,7 +753,7 @@ def test_backup_block_deletion(set_random_backupstore, client, core_api, volume_
 
     delete_backup_volume(client, backup_volume.name)
 
-
+@pytest.mark.v2_volume_test
 def test_dr_volume_activated_with_failed_replica(set_random_backupstore, client, core_api, volume_name):  # NOQA
     """
     Test DR volume activated with a failed replica
@@ -803,9 +803,9 @@ def test_dr_volume_activated_with_failed_replica(set_random_backupstore, client,
     common.update_setting(client, common.SETTING_DEGRADED_AVAILABILITY, "true")
 
     dr_vol = client.by_id_volume(dr_vol_name)
-    failed_replica = dr_vol.replicas[0]
-    crash_replica_processes(client, core_api, dr_vol_name,
-                            replicas=[failed_replica])
+    failed_replica_node = dr_vol.replicas[0].hostId
+    delete_instance_managers(client, core_api,
+                             nodes=[failed_replica_node])
     dr_vol = wait_for_volume_degraded(client, dr_vol_name)
 
     activate_standby_volume(client, dr_vol_name)
@@ -2969,6 +2969,7 @@ def test_expansion_canceling(client, core_api, volume_name, pod, pvc, storage_cl
     delete_and_wait_pv(core_api, expansion_pv_name)
 
 
+@pytest.mark.v2_volume_test
 @pytest.mark.coretest  # NOQA
 def test_running_volume_with_scheduling_failure(
         client, core_api, volume_name, pod):  # NOQA
@@ -3033,17 +3034,17 @@ def test_running_volume_with_scheduling_failure(
                                            data_path1)
 
     volume = client.by_id_volume(volume_name)
-    existing_replicas = {}
     for r in volume.replicas:
-        existing_replicas[r.name] = r
-    node = client.by_id_node(volume.replicas[0].hostId)
+        if r.hostId != volume.controllers[0].hostId:
+            unschedulable_node_id = r.hostId
+            break
+    node = client.by_id_node(unschedulable_node_id)
     node = set_node_scheduling(client, node, allowScheduling=False)
     common.wait_for_node_update(client, node.id,
                                 "allowScheduling", False)
 
-    crash_replica_processes(client, core_api, volume_name,
-                            replicas=[volume.replicas[0]],
-                            wait_to_fail=False)
+    delete_instance_managers(client, core_api,
+                             nodes=[unschedulable_node_id])
 
     # Wait for scheduling failure.
     # It means the new replica is created but fails to be scheduled.
@@ -3171,9 +3172,8 @@ def test_expansion_with_scheduling_failure(
     common.wait_for_node_update(client, node.id,
                                 "allowScheduling", False)
 
-    crash_replica_processes(client, core_api, volume_name,
-                            replicas=[failed_replica],
-                            wait_to_fail=False)
+    delete_instance_managers(client, core_api,
+                             nodes=[failed_replica.hostId])
 
     # Remove the failed replica so that it won't be reused later
     volume = wait_for_volume_degraded(client, volume_name)
@@ -5291,10 +5291,7 @@ def backup_failed_cleanup(client, core_api, volume_name, volume_size,  # NOQA
                                  backup_inprogress_predicate)
 
     # crash all replicas of the volume
-    try:
-        crash_replica_processes(client, core_api, volume_name)
-    except AssertionError:
-        crash_replica_processes(client, core_api, volume_name)
+    delete_instance_managers(client, core_api)
 
     # backup status should be in an Error state and with an error message
     def backup_failure_predicate(b):
@@ -5305,6 +5302,7 @@ def backup_failed_cleanup(client, core_api, volume_name, volume_size,  # NOQA
     return backup_name
 
 
+@pytest.mark.v2_volume_test
 @pytest.mark.coretest  # NOQA
 def test_backup_failed_enable_auto_cleanup(set_random_backupstore,  # NOQA
                                            client, core_api, volume_name):  # NOQA
@@ -5328,6 +5326,7 @@ def test_backup_failed_enable_auto_cleanup(set_random_backupstore,  # NOQA
     wait_for_backup_delete(client, volume_name, backup_name)
 
 
+@pytest.mark.v2_volume_test
 @pytest.mark.coretest  # NOQA
 def test_backup_failed_disable_auto_cleanup(set_random_backupstore,  # NOQA
                                         client, core_api, volume_name):  # NOQA

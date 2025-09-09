@@ -11,6 +11,7 @@ from common import DATA_SIZE_IN_MB_1, DATA_SIZE_IN_MB_2, DATA_SIZE_IN_MB_3
 from common import DATA_SIZE_IN_MB_4, Ki
 from common import check_volume_data, cleanup_volume, create_and_check_volume
 from common import delete_replica_processes, crash_replica_processes
+from common import delete_instance_managers
 from common import get_self_host_id, check_volume_endpoint
 from common import wait_for_snapshot_purge, write_volume_random_data
 from common import create_snapshot, DIRECTORY_PATH
@@ -85,6 +86,7 @@ from common import set_tags_for_node_and_its_disks
 from common import wait_for_tainted_node_engine_image_undeployed
 from common import wait_for_replica_count
 from common import DATA_ENGINE
+from common import wait_for_all_nodes_disks_schedulable
 
 from backupstore import set_random_backupstore # NOQA
 from backupstore import backupstore_cleanup
@@ -182,6 +184,7 @@ def ha_rebuild_replica_test(client, volname):   # NOQA
     check_volume_data(volume, data)
 
 
+@pytest.mark.v2_volume_test
 @pytest.mark.coretest   # NOQA
 def test_ha_salvage(client, core_api, volume_name, disable_auto_salvage):  # NOQA
     """
@@ -272,7 +275,7 @@ def ha_salvage_test(client, core_api, # NOQA
 
     data = write_volume_random_data(volume)
 
-    delete_replica_processes(client, core_api, volume_name)
+    delete_instance_managers(client, core_api)
 
     volume = wait_for_volume_faulted(client, volume_name)
     assert len(volume.replicas) == 2
@@ -282,7 +285,13 @@ def ha_salvage_test(client, core_api, # NOQA
     volume = wait_for_volume_detached(client, volume_name)
     volume = common.wait_for_volume_faulted(client, volume_name)
 
+    # after v2 instance manager restarted
+    # block disks will be unschedulable for a while
+    # volume salvage can only be performed after
+    # the corresponding disks are ready for use
+    wait_for_all_nodes_disks_schedulable(client)
     volume.salvage(names=[replica0_name, replica1_name])
+
     volume = client.by_id_volume(volume_name)
 
     assert len(volume.replicas) == 2
@@ -314,7 +323,7 @@ def ha_salvage_test(client, core_api, # NOQA
 
     data = write_volume_random_data(volume)
 
-    crash_replica_processes(client, core_api, volume_name)
+    delete_instance_managers(client, core_api)
 
     volume = common.wait_for_volume_faulted(client, volume_name)
     assert len(volume.replicas) == 2
@@ -366,7 +375,7 @@ def ha_salvage_test(client, core_api, # NOQA
 
     data = write_volume_random_data(volume)
 
-    crash_replica_processes(client, core_api, volume_name)
+    delete_instance_managers(client, core_api)
     # This is a workaround, since in some case it's hard to
     # catch faulted volume status
     common.wait_for_volume_status(client, volume_name,
@@ -411,7 +420,7 @@ def ha_salvage_test(client, core_api, # NOQA
 
     data = write_volume_random_data(volume)
 
-    crash_replica_processes(client, core_api, volume_name)
+    delete_instance_managers(client, core_api)
     # This is a workaround, since in some case it's hard to
     # catch faulted volume status
     common.wait_for_volume_status(client, volume_name,
@@ -651,6 +660,7 @@ def wait_pod_for_remount_request(client, core_api, volume_name, pod_name, origin
     assert md5sum == original_md5sum
 
 
+@pytest.mark.v2_volume_test
 def test_salvage_auto_crash_all_replicas(client, core_api, storage_class, sts_name, statefulset):  # NOQA
     """
     [HA] Test automatic salvage feature by crashing all the replicas
@@ -678,27 +688,28 @@ def test_salvage_auto_crash_all_replicas(client, core_api, storage_class, sts_na
     # Case #1
     vol_name, pod_name, md5sum = common.prepare_statefulset_with_data_in_mb(
         client, core_api, statefulset, sts_name, storage_class)
-    crash_replica_processes(client, core_api, vol_name)
+    delete_instance_managers(client, core_api)
     wait_pod_for_remount_request(client, core_api, vol_name, pod_name, md5sum)
 
     # Case #2
     volume = client.by_id_volume(vol_name)
     replica0 = volume.replicas[0]
 
-    crash_replica_processes(client, core_api, vol_name, [replica0])
+    delete_instance_managers(client, core_api, [replica0.hostId])
 
     volume = wait_for_volume_healthy(client, vol_name)
-    replicas = []
+    running_replica_nodes = []
     for r in volume.replicas:
         if r.running is True:
-            replicas.append(r)
+            running_replica_nodes.append(r.hostId)
 
-    crash_replica_processes(client, core_api, vol_name, replicas)
+    delete_instance_managers(client, core_api, running_replica_nodes)
 
     wait_pod_for_remount_request(client, core_api, vol_name, pod_name, md5sum)
 
 
-def test_rebuild_failure_with_intensive_data(client, core_api, volume_name, csi_pv, pvc, pod_make):  # NOQA
+@pytest.mark.v2_volume_test
+def test_rebuild_failure_with_intensive_data(client, core_api, storage_class, sts_name, statefulset):  # NOQA
     """
     [HA] Test rebuild failure with intensive data writing
 
@@ -713,14 +724,16 @@ def test_rebuild_failure_with_intensive_data(client, core_api, volume_name, csi_
     9. Wait for volume to finish two rebuilds and become healthy
     10. Check md5sum for both data location
     """
-
+    statefulset['spec']['replicas'] = 1
     data_path_1 = "/data/test1"
     data_path_2 = "/data/test2"
-    pod_name, pv_name, pvc_name, original_md5sum_1 = \
-        prepare_pod_with_data_in_mb(
-            client, core_api, csi_pv, pvc, pod_make, volume_name,
-            volume_size=str(2*Gi),
-            data_path=data_path_1, data_size_in_mb=DATA_SIZE_IN_MB_4)
+    volume_name, pod_name, original_md5sum_1 = \
+        common.prepare_statefulset_with_data_in_mb(
+            client, core_api, statefulset,
+            sts_name, storage_class,
+            data_path=data_path_1,
+            data_size_in_mb=DATA_SIZE_IN_MB_4)
+
     create_snapshot(client, volume_name)
     write_pod_volume_random_data(core_api, pod_name,
                                  data_path_2, DATA_SIZE_IN_MB_4)
@@ -736,7 +749,7 @@ def test_rebuild_failure_with_intensive_data(client, core_api, volume_name, csi_
     assert len(replicas) == 3
     random.shuffle(replicas)
     # Trigger rebuild
-    crash_replica_processes(client, core_api, volume_name, [replicas[0]])
+    delete_instance_managers(client, core_api, [replicas[0].hostId])
     wait_for_volume_degraded(client, volume_name)
     # Trigger rebuild failure by
     # crashing the replica which is sending data to the rebuilding replica
@@ -745,15 +758,17 @@ def test_rebuild_failure_with_intensive_data(client, core_api, volume_name, csi_
         if r.name == from_replica_name:
             from_replica = r
     assert from_replica
-    crash_replica_processes(client, core_api, volume_name, [from_replica])
-    wait_for_volume_healthy(client, volume_name)
+    delete_instance_managers(client, core_api, [from_replica.hostId])
+    wait_pod_for_remount_request(client, core_api, volume_name,
+                                 pod_name, original_md5sum_1, data_path_1)
     md5sum_1 = get_pod_data_md5sum(core_api, pod_name, data_path_1)
     assert original_md5sum_1 == md5sum_1
     md5sum_2 = get_pod_data_md5sum(core_api, pod_name, data_path_2)
     assert original_md5sum_2 == md5sum_2
 
 
-def test_rebuild_replica_and_from_replica_on_the_same_node(client, core_api, volume_name, csi_pv, pvc, pod_make):  # NOQA
+@pytest.mark.v2_volume_test
+def test_rebuild_replica_and_from_replica_on_the_same_node(client, core_api, storage_class, sts_name, statefulset):  # NOQA
     """
     [HA] Test the corner case that the from-replica and the rebuilding replica
     are on the same node
@@ -781,12 +796,14 @@ def test_rebuild_replica_and_from_replica_on_the_same_node(client, core_api, vol
         client.by_id_setting(SETTING_REPLICA_REPLENISHMENT_WAIT_INTERVAL)
     client.update(replenish_wait_setting, value="600")
 
+    statefulset['spec']['replicas'] = 1
     data_path = "/data/test"
-    pod_name, pv_name, pvc_name, original_md5sum = \
-        prepare_pod_with_data_in_mb(
-            client, core_api, csi_pv, pvc, pod_make, volume_name,
-            volume_size=str(2*Gi),
-            data_path=data_path, data_size_in_mb=2*Gi)
+    volume_name, pod_name, original_md5sum = \
+        common.prepare_statefulset_with_data_in_mb(
+            client, core_api, statefulset,
+            sts_name, storage_class,
+            data_path=data_path,
+            data_size_in_mb=2*Gi)
 
     volume = client.by_id_volume(volume_name)
     original_replicas = volume.replicas
@@ -803,8 +820,9 @@ def test_rebuild_replica_and_from_replica_on_the_same_node(client, core_api, vol
                                     "allowScheduling", False)
 
     # Trigger rebuild
-    crash_replica_processes(client, core_api, volume_name,
-                            [original_replicas[0], original_replicas[1]])
+    delete_instance_managers(client, core_api,
+                             [original_replicas[0].hostId,
+                              original_replicas[1].hostId])
     wait_for_volume_degraded(client, volume_name)
     from_replica_name, rebuilding_replica_name = \
         wait_for_rebuild_start(client, volume_name)
@@ -821,6 +839,7 @@ def test_rebuild_replica_and_from_replica_on_the_same_node(client, core_api, vol
         if r.name == rebuilding_replica_name:
             assert r.hostId == available_node_name
 
+    wait_for_pod_remount(core_api, pod_name)
     md5sum = get_pod_data_md5sum(core_api, pod_name, data_path)
     assert original_md5sum == md5sum
 
@@ -1164,10 +1183,12 @@ def test_inc_restoration_with_multiple_rebuild_and_expansion(set_random_backupst
     md5sum3 = get_pod_data_md5sum(core_api, dr_pod_name, data_path3)
     assert std_md5sum3 == md5sum3
 
-    failed_replica = dr_volume.replicas[0]
-    crash_replica_processes(client, core_api, dr_volume_name,
-                            replicas=[failed_replica],
-                            wait_to_fail=False)
+    for r in dr_volume.replicas:
+        if r.hostId != dr_volume.controllers[0].hostId:
+            failed_replica_node = r.hostId
+            break
+    delete_instance_managers(client, core_api,
+                             nodes=[failed_replica_node])
     wait_for_volume_degraded(client, dr_volume_name)
     wait_for_volume_healthy(client, dr_volume_name)
 
@@ -1393,7 +1414,8 @@ def test_restore_volume_with_invalid_backupstore(client, volume_name, backupstor
     url = invalid_backup_target_url + b.url.split("?")[1]
     with pytest.raises(Exception) as e:
         client.create_volume(name=res_name,
-                             fromBackup=url)
+                             fromBackup=url,
+                             dataEngine=DATA_ENGINE)
     assert "unable to create volume" in str(e.value)
 
     volumes = client.list_volume()
@@ -2307,9 +2329,8 @@ def test_reuse_failed_replica(client, core_api, volume_name): # NOQA
             with open(os.path.join(replica_1.dataPath, filenames), 'w') as f:
                 f.write("Longhorn is the best!")
 
-    crash_replica_processes(client, core_api, volume_name,
-                            replicas=[replica_1],
-                            wait_to_fail=False)
+    delete_instance_managers(client, core_api,
+                             nodes=[replica_1.hostId])
 
     # We need to wait for a minute to very that
     # Longhorn doesn't create a new replica
@@ -2348,6 +2369,7 @@ def test_reuse_failed_replica(client, core_api, volume_name): # NOQA
     check_volume_data(vol, data)
 
 
+@pytest.mark.v2_volume_test
 def test_reuse_failed_replica_with_scheduling_check(client, core_api, volume_name): # NOQA
     """
     Steps:
@@ -2381,8 +2403,9 @@ def test_reuse_failed_replica_with_scheduling_check(client, core_api, volume_nam
     for node in nodes:
         set_tags_for_node_and_its_disks(client, node, tags)
 
-    client.create_volume(name=volume_name, size=SIZE, numberOfReplicas=3,
-                         diskSelector=tags, nodeSelector=tags)
+    client.create_volume(name=volume_name, size=SIZE,
+                         numberOfReplicas=3, diskSelector=tags,
+                         nodeSelector=tags, dataEngine=DATA_ENGINE)
     vol = wait_for_volume_detached(client, volume_name)
     assert vol.diskSelector == tags
     assert vol.nodeSelector == tags
@@ -2413,10 +2436,8 @@ def test_reuse_failed_replica_with_scheduling_check(client, core_api, volume_nam
            replica_2 is not None and \
            replica_3 is not None
 
-    crash_replica_processes(client, core_api,
-                            volume_name,
-                            replicas=[replica_1, replica_2],
-                            wait_to_fail=False)
+    delete_instance_managers(client, core_api,
+                             nodes=[replica_1.hostId, replica_2.hostId])
 
     # We need to wait for a minute to very that
     # Longhorn doesn't create a new replica

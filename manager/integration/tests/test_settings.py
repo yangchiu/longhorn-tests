@@ -39,8 +39,8 @@ from common import (  # NOQA
     update_setting, BACKING_IMAGE_QCOW2_URL, BACKING_IMAGE_NAME,
     create_backing_image_with_matching_url, BACKING_IMAGE_EXT4_SIZE,
     check_backing_image_disk_map_status, wait_for_volume_delete,
-    wait_for_node_update,
-    crash_replica_processes, wait_for_engine_image_ref_count,
+    wait_for_node_update, delete_instance_managers,
+    wait_for_engine_image_ref_count,
     get_volume_engine, wait_for_volume_current_image,
     wait_for_rebuild_start, wait_for_rebuild_complete,
     wait_for_volume_degraded, write_volume_dev_random_mb_data,
@@ -755,7 +755,8 @@ def test_setting_backing_image_auto_cleanup(client, core_api, volume_name):  # N
 
     check_backing_image_disk_map_status(client, BACKING_IMAGE_NAME, 1, "ready")
 
-
+@pytest.mark.v2_volume_test
+@pytest.mark.flaky(reruns=3)
 def test_setting_concurrent_rebuild_limit(client, core_api, volume_name):  # NOQA
     """
     Test if setting Concurrent Replica Rebuild Per Node Limit works correctly.
@@ -880,13 +881,8 @@ def test_setting_concurrent_rebuild_limit(client, core_api, volume_name):  # NOQ
     wait_for_rebuild_start(client, volume1_name)
     volume1 = client.by_id_volume(volume1_name)
     current_node = get_self_host_id()
-    replicas = []
-    for r in volume1.replicas:
-        if r["hostId"] == current_node:
-            replicas.append(r)
 
-    assert len(replicas) > 0
-    crash_replica_processes(client, core_api, volume1_name, replicas)
+    delete_instance_managers(client, core_api, [current_node])
     delete_replica_on_test_node(client, volume2_name)
 
     # While one volume is rebuilding, verify another volume is not

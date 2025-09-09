@@ -309,6 +309,7 @@ def test_ha_simple_recovery_with_backing_image(client, volume_name):  # NOQA
         cleanup_all_backing_images(client)
 
 
+@pytest.mark.v2_volume_test
 @pytest.mark.backing_image  # NOQA
 def test_ha_salvage_with_backing_image(client, core_api, disable_auto_salvage, volume_name):  # NOQA
     for bi_url in (BACKING_IMAGE_QCOW2_URL, BACKING_IMAGE_RAW_URL):

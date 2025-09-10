@@ -55,6 +55,8 @@ main(){
   set_kubeconfig_envvar
   print_out_cluster_info
 
+  sleep 86400
+
   create_longhorn_namespace
 
   if [[ "${TF_VAR_distro}" == "COS_CONTAINERD" ]]; then

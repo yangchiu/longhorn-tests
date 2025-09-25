@@ -1,4 +1,4 @@
-From alpine:latest
+From alpine:3.21
 
 ARG TERRAFORM_VERSION=1.1.7
 

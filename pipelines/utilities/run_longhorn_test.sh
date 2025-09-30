@@ -8,10 +8,7 @@ run_longhorn_test(){
 
   local PYTEST_COMMAND_ARGS='"-s", "--junitxml='${LONGHORN_JUNIT_REPORT_PATH}'"'
   if [[ -n ${CUSTOM_TEST_OPTIONS} ]]; then
-    CUSTOM_TEST_OPTIONS=(${CUSTOM_TEST_OPTIONS})
-    for OPT in "${CUSTOM_TEST_OPTIONS[@]}"; do
-      PYTEST_COMMAND_ARGS=${PYTEST_COMMAND_ARGS}', "'${OPT}'"'
-    done
+    PYTEST_COMMAND_ARGS="${PYTEST_COMMAND_ARGS}, \"${CUSTOM_TEST_OPTIONS}\""
   fi
 
   ## generate test pod manifest

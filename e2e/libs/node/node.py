@@ -182,7 +182,12 @@ class Node:
         )
         control_plane_nodes = sorted(filter_nodes(nodes, condition))
 
-        worker_nodes = sorted([node for node in all_nodes if node not in control_plane_nodes])
+        def has_no_schedule_taint(node):
+            if not node.spec.taints:
+                return False
+            return any(taint.effect == "NoSchedule" for taint in node.spec.taints)
+
+        worker_nodes = sorted([node.metadata.name for node in nodes if not has_no_schedule_taint(node)])
 
         if role == "all":
             return all_nodes

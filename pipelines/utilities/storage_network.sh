@@ -1,3 +1,9 @@
+#!/bin/bash
+
+set -x
+
+source pipelines/utilities/longhorn_status.sh
+
 if [[ "${TF_VAR_network_stack}" == "ipv6" ]]; then
   NAD_NAME="demo-fd00-168-0-0"
 else
@@ -5,6 +11,19 @@ else
 fi
 
 echo "Using NAD: $NAD_NAME"
+
+create_nad_without_storage_network(){
+  kubectl apply -f https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/v4.0.2/deployments/multus-daemonset.yml
+  kubectl apply -f - <<EOF
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: demo-172-16-0-0
+  namespace: kube-system
+spec:
+  config: '{"cniVersion":"0.3.1","type":"cluster"}'
+EOF
+}
 
 deploy_multus_thin_plugin_daemonset(){
   curl -O "https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/${TF_VAR_multus_version}/deployments/multus-daemonset.yml"
@@ -163,3 +182,19 @@ validate_storage_network_setting_taking_effect(){
     exit 1
   fi
 }
+
+enable_storage_network_setting(){
+  LONGHORN_NAMESPACE="longhorn-system"
+  update_storage_network_setting
+  wait_longhorn_status_running
+  validate_storage_network_setting_taking_effect
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  if declare -f "$1" > /dev/null; then
+    "$@"
+  else
+    echo "Function '$1' not found"
+    exit 1
+  fi
+fi

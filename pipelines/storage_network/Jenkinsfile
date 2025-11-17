@@ -105,14 +105,23 @@ node {
             }
 
             stage ('report generation') {
-                sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${WORKSPACE}/longhorn-test-junit-report.xml ."
-
-                if(params.LONGHORN_UPGRADE_TEST) {
-                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${WORKSPACE}/longhorn-test-upgrade-junit-report.xml ."
-                    summary = junit 'longhorn-test-upgrade-junit-report.xml, longhorn-test-junit-report.xml'
-                }
-                else {
-                    summary = junit 'longhorn-test-junit-report.xml'
+                if (params.TEST_TYPE == 'robot') {
+                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${WORKSPACE}/log.html ."
+                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${WORKSPACE}/output.xml ."
+                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${WORKSPACE}/junit.xml ."
+                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${WORKSPACE}/report.html ."
+                    robot outputPath: '.',
+                          passThreshold: 100.0,
+                          unstableThreshold: 0.0
+                } else {
+                    sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${WORKSPACE}/longhorn-test-junit-report.xml ."
+                    if(params.LONGHORN_UPGRADE_TEST) {
+                        sh "docker cp ${JOB_BASE_NAME}-${BUILD_NUMBER}:${WORKSPACE}/longhorn-test-upgrade-junit-report.xml ."
+                        summary = junit 'longhorn-test-upgrade-junit-report.xml, longhorn-test-junit-report.xml'
+                    }
+                    else {
+                        summary = junit 'longhorn-test-junit-report.xml'
+                    }
                 }
             }
 

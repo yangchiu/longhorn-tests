@@ -79,6 +79,63 @@ spec:
     }'
 EOF
 kubectl apply -f nad-fd00-168-0-0.yaml
+
+# for testing endpoint-network-for-rwx-volume
+# create a second nad that reuses the same flannel overlay as nad1
+# just with a different nad name
+cat << EOF > nad-172-16-0-0.yaml
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: demo-172-16-0-0
+  namespace: kube-system
+spec:
+  config: '{
+      "cniVersion": "0.3.1",
+      "type": "flannel",
+      "subnetFile": "/run/flannel/multus-subnet-192.168.0.0.env",
+      "dataDir": "/var/lib/cni/multus-subnet-192.168.0.0",
+      "delegate": {
+        "type": "ipvlan",
+        "master": "eth1",
+        "mode": "l3",
+          "capabilities": {
+            "ips": true
+        }
+      },
+      "kubernetes": {
+          "kubeconfig": "/etc/cni/net.d/multus.d/multus.kubeconfig"
+      }
+    }'
+EOF
+kubectl apply -f nad-172-16-0-0.yaml
+
+cat << EOF > nad-fd00-172-16-0.yaml
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: demo-fd00-172-16-0
+  namespace: kube-system
+spec:
+  config: '{
+      "cniVersion": "0.3.1",
+      "type": "flannel",
+      "subnetFile": "/run/flannel/multus-subnet-fd00:168.0.0.env",
+      "dataDir": "/var/lib/cni/multus-subnet-fd00.168.0.0",
+      "delegate": {
+        "type": "ipvlan",
+        "master": "eth1",
+        "mode": "l3",
+          "capabilities": {
+            "ips": true
+        }
+      },
+      "kubernetes": {
+          "kubeconfig": "/etc/cni/net.d/multus.d/multus.kubeconfig"
+      }
+    }'
+EOF
+kubectl apply -f nad-fd00-172-16-0.yaml
 }
 
 update_storage_network_setting(){

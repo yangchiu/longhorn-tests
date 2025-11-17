@@ -13,7 +13,11 @@ source pipelines/utilities/create_longhorn_namespace.sh
 source pipelines/utilities/longhorn_manifest.sh
 source pipelines/utilities/longhorn_status.sh
 source pipelines/utilities/longhorn_ui.sh
-source pipelines/utilities/run_longhorn_test.sh
+if [[ ${TEST_TYPE} == "robot" ]]; then
+  source pipelines/utilities/run_longhorn_e2e_test.sh
+else
+  source pipelines/utilities/run_longhorn_test.sh
+fi
 
 # create and clean tmpdir
 TMPDIR="/tmp/longhorn"

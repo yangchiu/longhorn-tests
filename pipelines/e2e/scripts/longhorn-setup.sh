@@ -68,6 +68,10 @@ main(){
   setup_longhorn_ui_nodeport
   export_longhorn_ui_url
 
+  if [[ "$LONGHORN_TEST_CLOUDPROVIDER" == "harvester" ]]; then
+    sleep 86400
+  fi
+
   if [[ "${OUT_OF_CLUSTER}" == true ]]; then
     run_longhorn_test_out_of_cluster
   else

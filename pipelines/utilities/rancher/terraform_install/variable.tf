@@ -22,6 +22,11 @@ variable "rancher_chart_install_version" {
   type = string
 }
 
+variable "rancher_prime" {
+  type    = bool
+  default = false
+}
+
 variable "longhorn_repo" {
   type = string
 }

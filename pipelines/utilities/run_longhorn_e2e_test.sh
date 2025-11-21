@@ -80,6 +80,9 @@ run_longhorn_test(){
     yq e -i 'select(.spec.containers[0] != null).spec.containers[0].env += {"name": "RANCHER_CHART_REPO_BRANCH", "value": "'${RANCHER_CHART_REPO_BRANCH}'"}' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
     # e.g., 104.2.0+up1.7.1
     yq e -i 'select(.spec.containers[0] != null).spec.containers[0].env += {"name": "LONGHORN_INSTALL_VERSION", "value": "'${LONGHORN_INSTALL_VERSION}'"}' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
+    # default image registry is set to registry.rancher.com in rancher prime
+    # modify it to docker.io is required to pull images from longhornio
+    yq e -i 'select(.spec.containers[0] != null).spec.containers[0].env += {"name": "RANCHER_PRIME", "value": "'${RANCHER_PRIME}'"}' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
     # rancher or longhorn. use rancher/mirrored-longhornio- or longhornio/ images
     yq e -i 'select(.spec.containers[0] != null).spec.containers[0].env += {"name": "LONGHORN_REPO", "value": "'${LONGHORN_REPO}'"}' "${LONGHORN_TESTS_MANIFEST_FILE_PATH}"
     # basically upgrading Longhorn rancher chart is done by upgrading it to LONGHORN_INSTALL_VERSION (e.g. 104.2.0+up1.7.1) without custom image version

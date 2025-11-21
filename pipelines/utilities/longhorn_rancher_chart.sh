@@ -54,6 +54,7 @@ install_longhorn() {
             -var="rancher_chart_git_repo=${RANCHER_CHART_REPO_URI}" \
             -var="rancher_chart_git_branch=${RANCHER_CHART_REPO_BRANCH}" \
             -var="rancher_chart_install_version=${CHART_VERSION}" \
+            -var="rancher_prime=${RANCHER_PRIME}" \
             -var="longhorn_repo=${LONGHORN_REPO}" \
             -var="registry_url=${REGISTRY_URL}" \
             -var="registry_secret=docker-registry-secret" \

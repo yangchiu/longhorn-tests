@@ -14,6 +14,7 @@ modprobe uio_pci_generic
 modprobe vfio_pci
 modprobe nvme-tcp
 modprobe dm_crypt
+modprobe dm-delay
 touch /etc/modules-load.d/modules.conf
 cat > /etc/modules-load.d/modules.conf <<EOF
 uio
@@ -21,7 +22,11 @@ uio_pci_generic
 vfio_pci
 nvme-tcp
 dm_crypt
+dm-delay
 EOF
+
+SECTORS=$(blockdev --getsz /dev/xvdh)
+echo "0 $SECTORS delay /dev/xvdh 0 200" | dmsetup create lhdelay
 
 echo 1024 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 echo "vm.nr_hugepages=1024" >> /etc/sysctl.conf

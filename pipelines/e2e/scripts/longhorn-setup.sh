@@ -49,6 +49,10 @@ main(){
   patch_coredns_ipv6_name_servers
   scale_up_coredns
 
+  helm repo add chaos-mesh https://charts.chaos-mesh.org
+  kubectl create ns chaos-mesh
+  helm install chaos-mesh chaos-mesh/chaos-mesh -n=chaos-mesh --set chaosDaemon.runtime=containerd --set chaosDaemon.socketPath=/run/k3s/containerd/containerd.sock --version 2.8.0
+
   # msg="failed to get package manager" error="operating systems amzn are not supported"
   if [[ "${TF_VAR_k8s_distro_name}" != "eks" ]] && \
     [[ "${DISTRO}" != "talos" ]]; then

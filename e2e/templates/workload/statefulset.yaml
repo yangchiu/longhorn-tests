@@ -17,20 +17,19 @@ spec:
       labels:
         app: test-statefulset
     spec:
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
       terminationGracePeriodSeconds: 10
       containers:
-      - image: alpine/git
+      - image: ubuntu
         imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
         name: sleep
         command: ['/bin/sh', '-c']
         args: ['while true;do date;sleep 5; done']
-        volumeMounts:
+        volumeMounts: []
+        volumeDevices:
         - name: pod-data
-          mountPath: "/data"
+          devicePath: /dev/longhorn/longhorn-test-blk
   persistentVolumeClaimRetentionPolicy:
     whenDeleted: Delete
   volumeClaimTemplates:
@@ -41,6 +40,7 @@ spec:
     spec:
       accessModes:
       - ReadWriteOnce
+      volumeMode: Block
       storageClassName: longhorn
       resources:
         requests:

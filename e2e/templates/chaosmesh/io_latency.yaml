@@ -1,0 +1,18 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: IOChaos
+metadata:
+  name: lh-latency
+  namespace: chaos-mesh
+spec:
+  action: latency
+  mode: all
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: e2e-test-deployment-0
+  volumePath: /data
+  path: /data/**/*
+  delay: "200ms"
+  percent: 100
+  duration: "10m"

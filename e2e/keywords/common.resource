@@ -91,45 +91,18 @@ Set up test environment
     setup_control_plane_network_latency
     set_backupstore
     Init worker node variables
-    IF     "${DATA_ENGINE}" == "v2"
-        Enable v2 data engine and add block disks
-    END
+    Enable v2 data engine and add block disks
 
 Cleanup test resources
     set_backupstore
-    FOR    ${powered_off_node}    IN    @{powered_off_nodes}
-        Run keyword And Ignore Error    power_on_node_by_name    ${powered_off_node}
-        Remove Values From List    ${powered_off_nodes}    ${powered_off_node}
-    END
-    uncordon_all_nodes
-    cleanup_node_taints
-    cleanup_node_labels
-    cleanup_control_plane_network_latency
     reset_disk_eviction_and_scheduling
     reset_node_scheduling
-    cleanup_node_exec
-    cleanup_stress_helper
-    cleanup_recurringjobs
     cleanup_deployments
     cleanup_statefulsets
     cleanup_pods
     cleanup_persistentvolumeclaims
     cleanup_volumes
     cleanup_storageclasses
-    set_storageclass_default_state    longhorn    ${True}
-    cleanup_secrets
     cleanup_backups
-    cleanup_backup_backing_images
-    cleanup_system_backups
-    cleanup_system_restores
-    delete_orphans
-    cleanup_backing_images
     cleanup_disks
-    cleanup_engine_images
     reset_backupstore
-    reset_settings
-    reset_node_tags
-    reset_node_disks_tags
-    cleanup_k8s_node_zone
-    cleanup_csi_volume_snapshots
-    cleanup_csi_volume_snapshot_classes

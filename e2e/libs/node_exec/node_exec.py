@@ -62,6 +62,7 @@ class NodeExec:
                 'name': self.node_name
             },
             'spec': {
+                'hostPID': True,
                 'affinity': {
                     'nodeAffinity': {
                         'requiredDuringSchedulingIgnoredDuringExecution': {
@@ -126,6 +127,15 @@ class NodeExec:
                     }, {
                         'name': 'rancher',
                         'mountPath': '/var/lib/rancher'
+                    }, {
+                        'name': 'longhorn',
+                        'mountPath': '/var/lib/longhorn'
+                    }, {
+                        'name': 'dev',
+                        'mountPath': '/dev'
+                    }, {
+                        'name': 'sys',
+                        'mountPath': '/sys'
                     }],
                 }],
                 'volumes': [{
@@ -142,6 +152,21 @@ class NodeExec:
                     'name': 'rancher',
                     'hostPath': {
                         'path': '/var/lib/rancher'
+                    }
+                }, {
+                    'name': 'longhorn',
+                    'hostPath': {
+                        'path': '/var/lib/longhorn'
+                    }
+                }, {
+                    'name': 'dev',
+                    'hostPath': {
+                        'path': '/dev'
+                    }
+                }, {
+                    'name': 'sys',
+                    'hostPath': {
+                        'path': '/sys'
                     }
                 }]
             }

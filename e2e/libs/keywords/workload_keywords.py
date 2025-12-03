@@ -91,14 +91,14 @@ class workload_keywords:
     def write_workload_pod_random_data(self, workload_name, size_in_mb, file_name):
         pod_name = get_workload_pod_names(workload_name)[0]
 
-        logging(f'Writing {size_in_mb} MB random data to pod {pod_name} file {file_name}')
+        #logging(f'Writing {size_in_mb} MB random data to pod {pod_name} file {file_name}')
         checksum = write_pod_random_data(pod_name, size_in_mb, file_name)
 
-        logging(f"Storing pod {pod_name} file {file_name} checksum = {checksum}")
+        #logging(f"Storing pod {pod_name} file {file_name} checksum = {checksum}")
 
-        volume_name = get_volume_name_by_pod(pod_name)
-        self.volume.set_data_checksum(volume_name, file_name, checksum)
-        self.volume.set_last_data_checksum(volume_name, checksum)
+        #volume_name = get_volume_name_by_pod(pod_name)
+        #self.volume.set_data_checksum(volume_name, file_name, checksum)
+        #self.volume.set_last_data_checksum(volume_name, checksum)
 
     def write_workload_pod_large_data(self, workload_name, size_in_gb, file_name):
         pod_name = get_workload_pod_names(workload_name)[0]

@@ -20,7 +20,7 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-        - image: alpine/git
+        - image: ubuntu
           imagePullPolicy: IfNotPresent
           name: sleep
           command: ['/bin/sh', '-c']

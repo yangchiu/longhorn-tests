@@ -88,17 +88,24 @@ def write_pod_random_data(pod_name, size_in_mb, file_name,
         try:
             data_path = f"{data_directory}/{file_name}"
             api = client.CoreV1Api()
+            #write_data_cmd = [
+            #    '/bin/sh',
+            #    '-c',
+            #    f"mkfs.ext4 /dev/longhorn/longhorn-test-blk && mkdir /data && mount /dev/longhorn/longhorn-test-blk /data && dd if=/dev/zero of={data_path} bs=1M count=256 oflag=direct,dsync iflag=fullblock status=progress;"
+            #]
             write_data_cmd = [
                 '/bin/sh',
                 '-c',
-                f"dd if=/dev/urandom of={data_path} bs=1M count={size_in_mb} status=none;\
-                sync;\
-                md5sum {data_path} | awk '{{print $1}}' | tr -d ' \n'"
+                f"dd if=/dev/zero of={data_path} bs=1M count=256 oflag=direct,dsync iflag=fullblock status=progress;"
             ]
             resp = stream(
                 api.connect_get_namespaced_pod_exec, pod_name, 'default',
                 command=write_data_cmd, stderr=True, stdin=False, stdout=True,
                 tty=False)
+
+            logging(f"Writing data to pod {pod_name}:")
+            logging(f"{write_data_cmd}")
+            logging(f"{resp}")
 
             if "Input/output error" in resp or "Read-only file system" in resp:
                 raise RuntimeError(f"Attempt {attempt+1}: Command failed in pod {pod_name}. Output: {resp}")

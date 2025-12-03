@@ -28,6 +28,10 @@ Create statefulset ${statefulset_id}
     ${statefulset_name} =    generate_name_with_suffix    statefulset    ${statefulset_id}
     create_statefulset    ${statefulset_name}    &{config}
 
+Delete statefulset ${statefulset_id}
+    ${statefulset_name} =    generate_name_with_suffix    statefulset    ${statefulset_id}
+    delete_statefulset    ${statefulset_name}
+
 Scale statefulset ${statefulset_id} to ${replicaset_size}
     ${statefulset_name} =    generate_name_with_suffix    statefulset    ${statefulset_id}
     scale_statefulset    ${statefulset_name}    ${replicaset_size}

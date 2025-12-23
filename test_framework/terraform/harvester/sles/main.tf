@@ -67,10 +67,19 @@ resource "rancher2_machine_config_v2" "e2e-machine-config-controlplane" {
 
     user_data = <<EOF
 #cloud-config
-ssh_authorized_keys:
-  - >-
-    ${file(var.ssh_public_key_file_path)}
-  - ${var.custom_ssh_public_key}
+users:
+  - name: sles
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    ssh_authorized_keys:
+      - ${file(var.ssh_public_key_file_path)}
+      - ${var.custom_ssh_public_key}
+chpasswd:
+  list: |
+    sles:admin
+  expire: false
+ssh_pwauth: true
 runcmd:
   - SUSEConnect -r ${var.registration_code}
   - zypper install -y qemu-guest-agent iptables samba cifs-utils
@@ -120,10 +129,19 @@ resource "rancher2_machine_config_v2" "e2e-machine-config-worker" {
 
     user_data = <<EOF
 #cloud-config
-ssh_authorized_keys:
-  - >-
-    ${file(var.ssh_public_key_file_path)}
-  - ${var.custom_ssh_public_key}
+users:
+  - name: sles
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    ssh_authorized_keys:
+      - ${file(var.ssh_public_key_file_path)}
+      - ${var.custom_ssh_public_key}
+chpasswd:
+  list: |
+    sles:admin
+  expire: false
+ssh_pwauth: true
 write_files:
   - path: "/tmp/SUSE_Trust_Root_encoded.crt"
     content: >-

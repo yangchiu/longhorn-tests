@@ -8,7 +8,7 @@ elif [[  ${selinux_mode} == "permissive" ]]; then
     sudo setenforce  0
 fi
 
-sudo dnf install kernel-modules-extra-$(uname -r) -y
+sudo dnf install kernel-modules-extra -y
 sudo yum update -y
 sudo yum group install -y "Development Tools"
 sudo yum install -y iscsi-initiator-utils nfs-utils nfs4-acl-tools jq

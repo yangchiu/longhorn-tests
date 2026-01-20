@@ -8,20 +8,24 @@ Library    ../libs/keywords/volume_keywords.py
 
 *** Keywords ***
 Create statefulset ${statefulset_id} using ${volume_type} volume
+    [Arguments]    &{config}
     ${statefulset_name} =    generate_name_with_suffix    statefulset    ${statefulset_id}
-    create_statefulset    ${statefulset_name}    ${volume_type}
+    create_statefulset    ${statefulset_name}    ${volume_type}    &{config}
 
 Create statefulset ${statefulset_id} using ${volume_type} volume with ${sc_name} storageclass
+    [Arguments]    &{config}
     ${statefulset_name} =    generate_name_with_suffix    statefulset    ${statefulset_id}
-    create_statefulset    ${statefulset_name}    ${volume_type}    ${sc_name}
+    create_statefulset    ${statefulset_name}    ${volume_type}    ${sc_name}    &{config}
 
 Create statefulset ${statefulset_id} using ${volume_type} volume with ${sc_name} storageclass and size ${size} Mi
+    [Arguments]    &{config}
     ${statefulset_name} =    generate_name_with_suffix    statefulset    ${statefulset_id}
-    create_statefulset    ${statefulset_name}    ${volume_type}    ${sc_name}    ${size}Mi
+    create_statefulset    ${statefulset_name}    ${volume_type}    ${sc_name}    ${size}Mi    &{config}
 
 Create statefulset ${statefulset_id} using ${volume_type} volume with ${sc_name} storageclass and size ${size} Gi
+    [Arguments]    &{config}
     ${statefulset_name} =    generate_name_with_suffix    statefulset    ${statefulset_id}
-    create_statefulset    ${statefulset_name}    ${volume_type}    ${sc_name}    ${size}Gi
+    create_statefulset    ${statefulset_name}    ${volume_type}    ${sc_name}    ${size}Gi    &{config}
 
 Create statefulset ${statefulset_id}
     [Arguments]    &{config}

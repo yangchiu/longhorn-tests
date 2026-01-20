@@ -13,7 +13,7 @@ from utility.utility import logging
 from persistentvolumeclaim import PersistentVolumeClaim
 
 
-def create_deployment(name, claim_name, replicaset=1, enable_pvc_io_and_liveness_probe=False, block_volume=False):
+def create_deployment(name, claim_name, replicaset=1, enable_pvc_io_and_liveness_probe=False, block_volume=False, node_name=None):
     filepath = f"./templates/workload/deployment.yaml"
     with open(filepath, 'r') as f:
         namespace = 'default'
@@ -72,6 +72,9 @@ def create_deployment(name, claim_name, replicaset=1, enable_pvc_io_and_liveness
                 "periodSeconds": 5,
                 "failureThreshold": 3
             }
+
+        if node_name:
+            manifest_dict['spec']['template']['spec'].setdefault('nodeSelector', {})['kubernetes.io/hostname'] = node_name
 
         api = client.AppsV1Api()
 

@@ -372,14 +372,14 @@ Single Replica Node Down Deletion Policy do-nothing With RWO Volume Replica Loca
     Given Create storageclass longhorn-test with    dataEngine=${DATA_ENGINE}
     And Setting node-down-pod-deletion-policy is set to do-nothing
     When Create persistentvolumeclaim 0    volume_type=RWO    sc_name=longhorn-test
-    And Create deployment 0 with persistentvolumeclaim 0
+    And Create deployment 0 with persistentvolumeclaim 0    node_name=${NODE_0}
     And Wait for volume of deployment 0 healthy
     And Write 100 MB data to file data in deployment 0
 
     # Delete replicas to have the volume with its only replica located on different nodes.
     And Update volume of deployment 0 replica count to 1
-    And Delete replica of deployment 0 volume on replica node
-    And Delete replica of deployment 0 volume on volume node
+    And Delete replica of deployment 0 volume on node 0
+    And Delete replica of deployment 0 volume on node 1
     And Power off volume node of deployment 0
     And Wait for deployment 0 pod stuck in Terminating on the original node
 
@@ -391,13 +391,14 @@ Single Replica Node Down Deletion Policy do-nothing With RWO Volume Replica Loca
     Given Create storageclass longhorn-test with    dataEngine=${DATA_ENGINE}
     And Setting node-down-pod-deletion-policy is set to do-nothing
     When Create persistentvolumeclaim 0    volume_type=RWO    sc_name=longhorn-test
-    And Create deployment 0 with persistentvolumeclaim 0
+    And Create deployment 0 with persistentvolumeclaim 0    node_name=${NODE_0}
     And Wait for volume of deployment 0 healthy
     And Write 100 MB data to file data in deployment 0
 
     # Delete replicas to have the volume with its only replica located on the same node.
     And Update volume of deployment 0 replica count to 1
-    And Delete replica of deployment 0 volume on all replica node
+    And Delete replica of deployment 0 volume on node 1
+    And Delete replica of deployment 0 volume on node 2
     And Power off volume node of deployment 0
     And Wait for deployment 0 pod stuck in Terminating on the original node
 
@@ -409,14 +410,14 @@ Single Replica Node Down Deletion Policy delete-deployment-pod With RWO Volume R
     Given Create storageclass longhorn-test with    dataEngine=${DATA_ENGINE}
     And Setting node-down-pod-deletion-policy is set to delete-deployment-pod
     When Create persistentvolumeclaim 0    volume_type=RWO    sc_name=longhorn-test
-    And Create deployment 0 with persistentvolumeclaim 0
+    And Create deployment 0 with persistentvolumeclaim 0    node_name=${NODE_0}
     And Wait for volume of deployment 0 healthy
     And Write 100 MB data to file data in deployment 0
 
     # Delete replicas to have the volume with its only replica located on different nodes.
     And Update volume of deployment 0 replica count to 1
-    And Delete replica of deployment 0 volume on replica node
-    And Delete replica of deployment 0 volume on volume node
+    And Delete replica of deployment 0 volume on node 0
+    And Delete replica of deployment 0 volume on node 1
     And Power off volume node of deployment 0
     Then Wait for volume of deployment 0 attaching
 
@@ -428,13 +429,14 @@ Single Replica Node Down Deletion Policy delete-deployment-pod With RWO Volume R
     Given Create storageclass longhorn-test with    dataEngine=${DATA_ENGINE}
     And Setting node-down-pod-deletion-policy is set to delete-deployment-pod
     When Create persistentvolumeclaim 0    volume_type=RWO    sc_name=longhorn-test
-    And Create deployment 0 with persistentvolumeclaim 0
+    And Create deployment 0 with persistentvolumeclaim 0    node_name=${NODE_0}
     And Wait for volume of deployment 0 healthy
     And Write 100 MB data to file data in deployment 0
 
     # Delete replicas to have the volume with its only replica located on the same node
     And Update volume of deployment 0 replica count to 1
-    And Delete replica of deployment 0 volume on all replica node
+    And Delete replica of deployment 0 volume on node 1
+    And Delete replica of deployment 0 volume on node 2
     And Power off volume node of deployment 0
     Then Wait for volume of deployment 0 faulted
     And Wait for deployment 0 pod stuck in ContainerCreating on another node
@@ -447,14 +449,14 @@ Single Replica Node Down Deletion Policy delete-deployment-pod With RWO Volume R
 Single Replica Node Down Deletion Policy delete-both-statefulset-and-deployment-pod With RWO Volume Replica Locate On Replica Node
     Given Create storageclass longhorn-test with    dataEngine=${DATA_ENGINE}
     And Setting node-down-pod-deletion-policy is set to delete-both-statefulset-and-deployment-pod
-    When Create statefulset 0 using RWO volume with longhorn-test storageclass
+    When Create statefulset 0 using RWO volume with longhorn-test storageclass    node_name=${NODE_0}
     And Wait for volume of statefulset 0 healthy
     And Write 100 MB data to file data in statefulset 0
 
     # Delete replicas to have the volume with its only replica located on different nodes.
     And Update volume of statefulset 0 replica count to 1
-    And Delete replica of statefulset 0 volume on replica node
-    And Delete replica of statefulset 0 volume on volume node
+    And Delete replica of statefulset 0 volume on node 0
+    And Delete replica of statefulset 0 volume on node 1
     And Power off volume node of statefulset 0
     Then Wait for volume of statefulset 0 attaching
 
@@ -465,13 +467,14 @@ Single Replica Node Down Deletion Policy delete-both-statefulset-and-deployment-
 Single Replica Node Down Deletion Policy delete-both-statefulset-and-deployment-pod With RWO Volume Replica Locate On Volume Node
     Given Create storageclass longhorn-test with    dataEngine=${DATA_ENGINE}
     And Setting node-down-pod-deletion-policy is set to delete-both-statefulset-and-deployment-pod
-    When Create statefulset 0 using RWO volume with longhorn-test storageclass
+    When Create statefulset 0 using RWO volume with longhorn-test storageclass    node_name=${NODE_0}
     And Wait for volume of statefulset 0 healthy
     And Write 100 MB data to file data in statefulset 0
 
     # Delete replicas to have the volume with its only replica located on the same.
     And Update volume of statefulset 0 replica count to 1
-    And Delete replica of statefulset 0 volume on all replica node
+    And Delete replica of statefulset 0 volume on node 1
+    And Delete replica of statefulset 0 volume on node 2
     And Power off volume node of statefulset 0
     Then Wait for volume of statefulset 0 faulted
     And Wait for statefulset 0 pod stuck in ContainerCreating on another node

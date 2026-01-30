@@ -6,7 +6,7 @@ on:
 jobs:
   jenkins-test:
     # Only run if it's a Pull Request and the comment matches the trigger
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '/jenkins test') && github.event.comment.author_association == 'MEMBER'
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/jenkins test') && (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')
     runs-on: ubuntu-latest
     steps:
       - name: Fetch PR Metadata

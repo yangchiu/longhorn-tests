@@ -1,0 +1,45 @@
+name: Trigger Jenkins CI
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  jenkins-test:
+    # Only run if it's a Pull Request and the comment matches the trigger
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/jenkins test') && github.event.comment.author_association == 'MEMBER'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch PR Metadata
+        id: pr_metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Query the head repository URL and the head branch name
+          PR_JSON=$(gh pr view ${{ github.event.issue.number }} --json headRefName,headRepositoryOwner,headRepository -q '.')
+          
+          BRANCH=$(echo $PR_JSON | jq -r '.headRefName')
+          # This builds the URL, e.g., https://github.com/chriscchien/longhorn-tests.git
+          REPO_URL="https://github.com/$(echo $PR_JSON | jq -r '.headRepository.nameWithOwner').git"
+          
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "repo_url=$REPO_URL" >> $GITHUB_OUTPUT
+      - name: Extract Arguments
+        id: vars
+        run: |
+          # Grabs everything after '/jenkins test'
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          ARGS=$(echo "$COMMENT_BODY" | sed 's/\/jenkins test//g' | xargs)
+          echo "test_options=$ARGS" >> $GITHUB_OUTPUT
+      - name: Trigger Jenkins via API
+        env:
+          JENKINS_URL: "ci.longhorn.io"
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}
+          JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
+          REMOTE_TOKEN: ${{ secrets.REMOTE_TOKEN }}
+        run: |
+          curl -X POST "https://$JENKINS_USER:$JENKINS_TOKEN@$JENKINS_URL/job/longhorn-e2e-test-pull-request-check/buildWithParameters" \
+            --data "token=$REMOTE_TOKEN" \
+            --data "PR_NUMBER=${{ github.event.issue.number }}" \
+            --data "LONGHORN_TESTS_REPO=${{ steps.pr_metadata.outputs.repo_url }}" \
+            --data "LONGHORN_TESTS_BRANCH=${{ steps.pr_metadata.outputs.branch }}" \
+            --data "CUSTOM_TEST_OPTIONS=${{ steps.vars.outputs.test_options }}"

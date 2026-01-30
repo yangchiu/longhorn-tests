@@ -33,7 +33,7 @@ jobs:
           # Grabs everything after '/jenkins test'
           # Use 'sed' to trim leading/trailing whitespace without stripping internal quotes
           ARGS=$(echo "$COMMENT_RAW" | sed 's/\/jenkins test//g' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-          ESCAPED_ARGS="${ARGS//\"/\\\"}"
+          ESCAPED_ARGS=$(echo "$ARGS" | sed 's/"/\\\\\\"/g')
           echo "test_options=$ESCAPED_ARGS" >> $GITHUB_OUTPUT
       - name: Trigger Jenkins via API
         env:

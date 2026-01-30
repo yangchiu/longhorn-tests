@@ -15,10 +15,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Query the head repository URL and the head branch name
-          PR_JSON=$(gh pr view ${{ github.event.issue.number }} --json headRefName,headRepositoryOwner,headRepository -q '.')
+          PR_JSON=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} --json headRefName,headRepositoryOwner,headRepository -q '.')
           
           BRANCH=$(echo $PR_JSON | jq -r '.headRefName')
-          # This builds the URL, e.g., https://github.com/chriscchien/longhorn-tests.git
           REPO_URL="https://github.com/$(echo $PR_JSON | jq -r '.headRepository.nameWithOwner').git"
           
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT

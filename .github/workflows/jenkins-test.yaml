@@ -25,9 +25,13 @@ jobs:
       - name: Extract Arguments
         id: vars
         run: |
+          # Use an environment variable to safely handle the quotes from the comment
+          COMMENT_RAW=$(cat << 'EOF'
+          ${{ github.event.comment.body }}
+          EOF
+          )
           # Grabs everything after '/jenkins test'
-          COMMENT_BODY="${{ github.event.comment.body }}"
-          ARGS=$(echo "$COMMENT_BODY" | sed 's/\/jenkins test//g' | xargs)
+          ARGS=$(echo "$COMMENT_RAW" | sed 's/\/jenkins test//g' | xargs)
           echo "test_options=$ARGS" >> $GITHUB_OUTPUT
       - name: Trigger Jenkins via API
         env:

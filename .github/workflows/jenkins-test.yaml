@@ -42,3 +42,8 @@ jobs:
             --data "LONGHORN_TESTS_REPO=${{ steps.pr_metadata.outputs.repo_url }}" \
             --data "LONGHORN_TESTS_BRANCH=${{ steps.pr_metadata.outputs.branch }}" \
             --data "CUSTOM_TEST_OPTIONS=${{ steps.vars.outputs.test_options }}"
+      - name: React
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions -f content='+1'

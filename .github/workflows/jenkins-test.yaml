@@ -31,7 +31,7 @@ jobs:
           EOF
           )
           # Grabs everything after '/jenkins test'
-          ARGS=$(echo "$COMMENT_RAW" | sed 's/\/jenkins test//g' | xargs)
+          ARGS=$(echo "$COMMENT_RAW" | sed 's/\/jenkins test//g')
           echo "test_options=$ARGS" >> $GITHUB_OUTPUT
       - name: Trigger Jenkins via API
         env:

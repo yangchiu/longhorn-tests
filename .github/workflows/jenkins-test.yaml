@@ -32,8 +32,9 @@ jobs:
           )
           # Grabs everything after '/jenkins test'
           # Use 'sed' to trim leading/trailing whitespace without stripping internal quotes
-          ARGS=$(echo "$COMMENT_RAW" | sed 's/\/jenkins test//g' | xargs)
-          echo "test_options=$ARGS" >> $GITHUB_OUTPUT
+          ARGS=$(echo "$COMMENT_RAW" | sed 's/\/jenkins test//g' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+          ESCAPED_ARGS="${ARGS//\"/\\\"}"
+          echo "test_options=$ESCAPED_ARGS" >> $GITHUB_OUTPUT
       - name: Trigger Jenkins via API
         env:
           JENKINS_URL: "ci.longhorn.io"
@@ -46,7 +47,7 @@ jobs:
             --data "PR_NUMBER=${{ github.event.issue.number }}" \
             --data "LONGHORN_TESTS_REPO=${{ steps.pr_metadata.outputs.repo_url }}" \
             --data "LONGHORN_TESTS_BRANCH=${{ steps.pr_metadata.outputs.branch }}" \
-            --data-urlencode "CUSTOM_TEST_OPTIONS=\\\"${{ steps.vars.outputs.test_options }}\\\""
+            --data-urlencode "CUSTOM_TEST_OPTIONS=${{ steps.vars.outputs.test_options }}"
       - name: React
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -79,7 +79,7 @@ install_longhorn(){
   fi
 
   get_longhorn_namespace
-  helm upgrade --install longhorn "${LONGHORN_REPO_DIR}/chart/" --namespace "${LONGHORN_NAMESPACE}" ${CUSTOM_HELM_INSTALLATION}
+  helm upgrade --install longhorn "${LONGHORN_REPO_DIR}/chart/" --namespace "${LONGHORN_NAMESPACE}" --set preUpgradeChecker.upgradeVersionCheck=false ${CUSTOM_HELM_INSTALLATION}
   wait_longhorn_status_running
 }
 

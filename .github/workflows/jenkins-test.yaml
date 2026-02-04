@@ -44,7 +44,7 @@ jobs:
         run: |
           curl -X POST "https://$JENKINS_USER:$JENKINS_TOKEN@$JENKINS_URL/job/longhorn-e2e-test-pull-request-check/buildWithParameters" \
             --data "token=$REMOTE_TOKEN" \
-            --data "PR_NUMBER=${{ github.event.issue.number }}" \
+            --data "PR_NUMBER=3119" \
             --data "LONGHORN_TESTS_REPO=${{ steps.pr_metadata.outputs.repo_url }}" \
             --data "LONGHORN_TESTS_BRANCH=${{ steps.pr_metadata.outputs.branch }}" \
             --data-urlencode "CUSTOM_TEST_OPTIONS=${{ steps.vars.outputs.test_options }}"

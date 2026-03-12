@@ -96,12 +96,12 @@ resource "rancher2_machine_config_v2" "e2e-machine-config-worker" {
     disk_info = <<EOF
     {
         "disks": [{
-            "imageName": "longhorn-qa/image-pqjk7",
+            "imageName": "longhorn-qa/image-sv9sm",
             "size": ${var.block_device_size_worker},
             "bootOrder": 1
         },
         {
-            "storageClassName": "harvester-longhorn",
+            "storageClassName": "longhorn-v2",
             "size": ${var.block_device_size_worker},
             "bootOrder": 2
         }]

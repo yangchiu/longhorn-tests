@@ -31,12 +31,12 @@ variable "registry_aws_instance_type" {
 
 variable "docker_hub_username" {
   type = string
-  sensitive = true
+  #sensitive = true
 }
 
 variable "docker_hub_password" {
   type = string
-  sensitive = true
+  #sensitive = true
 }
 
 variable "longhorn_version" {

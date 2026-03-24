@@ -559,7 +559,7 @@ class CRD(Base):
         cmd = [
             "sh", "-c",
             f"dd if=/dev/urandom of={endpoint} bs=1M count={size} status=none; "
-            f"sync {endpoint}; "
+            f"sync {endpoint} 2>/dev/null; "
             f"md5sum {endpoint} | awk '{{print $1}}' | tr -d ' \n'"
         ]
         checksum = NodeExec(node_name).issue_cmd(cmd)
@@ -601,7 +601,7 @@ class CRD(Base):
         NodeExec(node_name).issue_cmd(cmd)
 
         # Sync to ensure data is persisted
-        sync_cmd = ["sh", "-c", f"sync {endpoint}"]
+        sync_cmd = ["sh", "-c", f"sync {endpoint} 2>/dev/null"]
         NodeExec(node_name).issue_cmd(sync_cmd)
 
     def write_scattered_data_with_fio(self, volume_name, size, bs, ratio):
@@ -673,7 +673,7 @@ class CRD(Base):
         NodeExec(node_name).issue_cmd(cmd)
         
         # Sync to ensure data is persisted
-        sync_cmd = ["sh", "-c", f"sync {endpoint}"]
+        sync_cmd = ["sh", "-c", f"sync {endpoint} 2>/dev/null"]
         NodeExec(node_name).issue_cmd(sync_cmd)
 
     def keep_writing_data(self, volume_name, size):

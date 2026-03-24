@@ -23,7 +23,7 @@ spec:
         fsGroup: 1000
       terminationGracePeriodSeconds: 10
       containers:
-      - image: alpine/git
+      - image: alpine/git:v2.52.0
         imagePullPolicy: IfNotPresent
         name: sleep
         command: ['/bin/sh', '-c']

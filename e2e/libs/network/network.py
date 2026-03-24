@@ -14,7 +14,6 @@ from workload.pod import create_pod
 from workload.pod import delete_pod
 from workload.pod import new_pod_manifest
 from workload.pod import wait_for_pod_status
-from workload.pod import IMAGE_BUSYBOX
 
 
 def setup_control_plane_network_latency(latency_in_ms=0):
@@ -24,7 +23,6 @@ def setup_control_plane_network_latency(latency_in_ms=0):
             ns_mnt = os.path.join(HOST_ROOTFS, "proc/1/ns/mnt")
             ns_net = os.path.join(HOST_ROOTFS, "proc/1/ns/net")
             manifest = new_pod_manifest(
-                image=IMAGE_BUSYBOX,
                 command=["nsenter", f"--mount={ns_mnt}", f"--net={ns_net}", "--", "sh"],
                 args=["-c", f"INTERFACE=$(ip route show default | awk '/default/ {{print $5}}') && tc qdisc replace dev $INTERFACE root netem delay {latency_in_ms}ms"],
                 node_name=control_plane_node,
@@ -40,7 +38,6 @@ def cleanup_control_plane_network_latency():
         ns_mnt = os.path.join(HOST_ROOTFS, "proc/1/ns/mnt")
         ns_net = os.path.join(HOST_ROOTFS, "proc/1/ns/net")
         manifest = new_pod_manifest(
-            image=IMAGE_BUSYBOX,
             command=["nsenter", f"--mount={ns_mnt}", f"--net={ns_net}", "--", "sh"],
             args=["-c", f"INTERFACE=$(ip route show default | awk '/default/ {{print $5}}') && tc qdisc del dev $INTERFACE root || true"],
             node_name=control_plane_node,
@@ -54,7 +51,6 @@ async def disconnect_node_network(node_name, disconnection_time_in_sec=10):
     ns_mnt = os.path.join(HOST_ROOTFS, "proc/1/ns/mnt")
     ns_net = os.path.join(HOST_ROOTFS, "proc/1/ns/net")
     manifest = new_pod_manifest(
-        image=IMAGE_BUSYBOX,
         command=["nsenter", f"--mount={ns_mnt}", f"--net={ns_net}", "--", "sh"],
         args=["-c", f"INTERFACE=$(ip route show default | awk '/default/ {{print $5}}') && sleep 10 && tc qdisc replace dev $INTERFACE root netem loss 100% && sleep {disconnection_time_in_sec} && tc qdisc del dev $INTERFACE root"],
         node_name=node_name
@@ -70,7 +66,6 @@ def disconnect_node_network_without_waiting_completion(node_name, disconnection_
     ns_mnt = os.path.join(HOST_ROOTFS, "proc/1/ns/mnt")
     ns_net = os.path.join(HOST_ROOTFS, "proc/1/ns/net")
     manifest = new_pod_manifest(
-        image=IMAGE_BUSYBOX,
         command=["nsenter", f"--mount={ns_mnt}", f"--net={ns_net}", "--", "sh"],
         args=["-c", f"INTERFACE=$(ip route show default | awk '/default/ {{print $5}}') && sleep 10 && tc qdisc replace dev $INTERFACE root netem loss 100% && sleep {disconnection_time_in_sec} && tc qdisc del dev $INTERFACE root"],
         node_name=node_name,

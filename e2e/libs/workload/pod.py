@@ -12,7 +12,7 @@ from utility.utility import logging
 from utility.utility import generate_name_random
 from utility.utility import get_retry_count_and_interval
 
-from workload.constant import IMAGE_BUSYBOX
+from workload.constant import IMAGE_ALPINE
 
 
 def new_pod_manifest(pod_name="", image="", command=[], args=[],
@@ -21,8 +21,8 @@ def new_pod_manifest(pod_name="", image="", command=[], args=[],
         pod_name = generate_name_random()
     logging(f"Creating pod for {command} {args} on {node_name}")
     # Set default image and args
-    if image is None:
-        image = IMAGE_BUSYBOX
+    if not image:
+        image = IMAGE_ALPINE
         args = [
             '/bin/sh', '-c',
             'while true; do date; sleep 5; done'

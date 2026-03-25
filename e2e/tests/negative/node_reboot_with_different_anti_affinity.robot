@@ -25,7 +25,6 @@ Resource    ../keywords/setting.resource
 
 Test Setup    Set up test environment
 Test Teardown    Cleanup test resources
-Test Template    Power Off Node With Anti-Affinity Settings
 
 *** Keywords ***
 Power Off Node With Anti-Affinity Settings
@@ -49,14 +48,13 @@ Power Off Node With Anti-Affinity Settings
     And Record volume 0 replica names
 
     IF    '${node_type}' == 'volume'
-        ${node_num} =    Set Variable    0
+        ${node_id} =    Set Variable    0
     ELSE
-        '${node_type}' == 'replica'
-        ${node_num} =    Set Variable    1
+        ${node_id} =    Set Variable    1
     END
 
     FOR    ${i}    IN RANGE    ${LOOP_COUNT}
-        When Power off node ${node_type} for ${power_off_time} mins
+        When Power off node ${node_id} for ${power_off_time} mins
         Then Wait for longhorn ready
         And Wait for volume 0 healthy
 
@@ -64,7 +62,7 @@ Power Off Node With Anti-Affinity Settings
         ...    And Check volume 0 replica names are as recorded
     END
 
-*** Test Cases ***    DESCRIPTION    DISK-AFFINITY    NODE-AFFINITY    ZONE-AFFINITY    NODE#    POWER-OFF-TIMEZONE
+*** Test Cases ***
 Power Off Replica Node More Than 3 Mins With Zone Soft Anti Affinity Enabled
     Power Off Node With Anti-Affinity Settings    zone_affinity=true    node_type=replica    power_off_time=4
 

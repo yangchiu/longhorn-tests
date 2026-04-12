@@ -109,7 +109,7 @@ resource "rancher2_machine_config_v2" "e2e-machine-config-worker" {
             "bootOrder": 1
         },
         {
-            "storageClassName": "longhorn-1-replica",
+            "storageClassName": "longhorn-v2",
             "size": ${var.block_device_size_worker},
             "bootOrder": 2
         }]

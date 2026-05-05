@@ -51,6 +51,9 @@ main(){
   install_rancher
   get_rancher_api_key
 
+  echo "sleep 86400 ..."
+  sleep 86400
+
   if [[ "${LONGHORN_UPGRADE_TEST}" == true ]]; then
     install_longhorn_stable
     setup_longhorn_ui_nodeport

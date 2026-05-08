@@ -250,7 +250,7 @@ resource "aws_instance" "lh_registry_aws_instance" {
 }
 
 data "aws_route53_zone" "lh_zone" {
-  name = "longhorn.ninja"
+  name = "openshift-longhorn.com"
 }
 
 resource "aws_route53_record" "lh_registry" {
@@ -260,7 +260,7 @@ resource "aws_route53_record" "lh_registry" {
   ]
 
   zone_id = data.aws_route53_zone.lh_zone.zone_id
-  name   = "lh-registry-${random_string.random_suffix.id}.longhorn.ninja"
+  name   = "lh-registry-${random_string.random_suffix.id}.openshift-longhorn.com"
   type   = "A"
   ttl    = 60
   records  = [aws_instance.lh_registry_aws_instance.public_ip]

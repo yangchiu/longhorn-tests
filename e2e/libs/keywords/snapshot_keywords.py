@@ -12,8 +12,8 @@ class snapshot_keywords:
         self.snapshot = Snapshot()
         self.retry_count, self.retry_interval = get_retry_count_and_interval()
 
-    def create_snapshot(self, volume_name, snapshot_id, waiting=True):
-        self.snapshot.create(volume_name, snapshot_id, waiting)
+    def create_snapshot(self, volume_name, snapshot_id):
+        self.snapshot.create(volume_name, snapshot_id)
 
     def delete_snapshot(self, volume_name, snapshot_id):
         self.snapshot.delete(volume_name, snapshot_id)

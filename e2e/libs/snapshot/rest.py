@@ -2,6 +2,9 @@ from snapshot.base import Base
 from utility.utility import logging
 from utility.utility import get_longhorn_client
 from utility.utility import get_retry_count_and_interval
+from utility.utility import is_integer
+from utility.utility import subprocess_exec_cmd
+from utility import constant
 from node_exec import NodeExec
 from volume import Rest as RestVolume
 import time
@@ -13,33 +16,28 @@ class Rest(Base):
         self.volume = RestVolume()
         self.retry_count, self.retry_interval = get_retry_count_and_interval()
 
-    def create(self, volume_name, snapshot_id, waiting):
+    def create(self, volume_name, snapshot_id):
         logging(f"Creating volume {volume_name} snapshot {snapshot_id}")
-        volume = self.volume.get(volume_name)
-        snapshot = volume.snapshotCRCreate()
-        snap_name = snapshot.name
-
-        if not waiting:
-            return snapshot
-
-        snapshot_created = False
-        for i in range(self.retry_count):
-            snapshots = volume.snapshotList().data
-            for vs in snapshots:
-                if vs.name == snap_name:
-                    snapshot_created = True
-                    snapshot = vs 
-                    break
-            if snapshot_created is True:
-                break
-            time.sleep(self.retry_interval)
-
-        assert snapshot_created
+        if is_integer(snapshot_id):
+            snapshot_name = f"snapshot-{snapshot_id}"
+        else:
+            snapshot_name = snapshot_id
+        cmd = f"""
+apiVersion: longhorn.io/v1beta2
+kind: Snapshot
+metadata:
+  name: {snapshot_name}
+  namespace: {constant.LONGHORN_NAMESPACE}
+  labels:
+    longhornvolume: {volume_name}
+spec:
+  createSnapshot: true
+  volume: {volume_name}
+"""
+        subprocess_exec_cmd(cmd)
 
         self.set_snapshot_id(snap_name, snapshot_id)
-        logging(f"Created volume {volume_name} snapshot {snapshot_id} {snap_name}")
-
-        return snapshot
+        logging(f"Created volume {volume_name} snapshot {snapshot_name}")
 
     def get(self, volume_name, snapshot_id):
         snapshots = self.list(volume_name)

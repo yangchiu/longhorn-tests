@@ -94,6 +94,7 @@ Test Backup Volume List
 
 Test Incremental Restore
     [Documentation]    Test restore from disaster recovery volume (incremental restore)
+    [Tags]    snapshot
     Given Create volume 0 with    dataEngine=${DATA_ENGINE}
     And Attach volume 0
     And Wait for volume 0 healthy

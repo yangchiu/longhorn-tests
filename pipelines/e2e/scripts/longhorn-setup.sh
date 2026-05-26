@@ -47,7 +47,7 @@ main(){
   if [[ "${TF_VAR_cis_hardening}" == true ]]; then
     install_backupstores_networkpolicy
   fi
-  setup_azurite_backup_store
+  #setup_azurite_backup_store
   install_csi_snapshotter
   create_nad_without_storage_network
 
@@ -55,10 +55,10 @@ main(){
   scale_up_coredns
 
   # msg="failed to get package manager" error="operating systems amzn are not supported"
-  if [[ "${TF_VAR_k8s_distro_name}" != "eks" ]] && \
-    [[ "${DISTRO}" != "talos" ]]; then
-    longhornctl_check
-  fi
+  #if [[ "${TF_VAR_k8s_distro_name}" != "eks" ]] && \
+  #  [[ "${DISTRO}" != "talos" ]]; then
+  #  longhornctl_check
+  #fi
 
   if [[ "${DISTRO}" == "talos" ]]; then
     install_metrics_server

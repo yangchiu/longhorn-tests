@@ -12,6 +12,8 @@ Resource    ../keywords/persistentvolumeclaim.resource
 Resource    ../keywords/sharemanager.resource
 Resource    ../keywords/deployment.resource
 Resource    ../keywords/workload.resource
+Resource    ../keywords/longhorn.resource
+Resource    ../keywords/setting.resource
 
 Test Setup    Set up test environment
 Test Teardown    Cleanup test resources
@@ -142,3 +144,29 @@ Test RWX Volume Automatic Online Expansion
     And Write 60 MB data to file data2.txt in deployment 0
     Then Check deployment 0 data in file data.txt is intact
     And Check deployment 0 data in file data2.txt is intact
+
+Test Volume Creation Before And After Upgrade
+    Given Setting deleting-confirmation-flag is set to true
+    And Uninstall Longhorn
+    And Check Longhorn CRD removed
+    And Install Longhorn stable version
+
+    And Create crypto secret
+    And Create storageclass longhorn-crypto with    encrypted=true    dataEngine=${DATA_ENGINE}
+    And Create persistentvolumeclaim 0    sc_name=longhorn-crypto
+    And Create deployment 0 with persistentvolumeclaim 0
+    And Wait for volume of deployment 0 healthy
+    And Run command
+    ...    kubectl get engines -n longhorn-system -oyaml | grep endpoint
+
+    When Upgrade Longhorn to custom version
+    And Run command
+    ...    kubectl get engines -n longhorn-system -oyaml | grep endpoint
+    And Create persistentvolumeclaim 1    sc_name=longhorn-crypto
+    And Create deployment 1 with persistentvolumeclaim 1
+    And Wait for volume of deployment 1 healthy
+    And Run command
+    ...    kubectl get engines -n longhorn-system -oyaml | grep endpoint
+
+    And Log To Console    "Sleep ..."
+    And Sleep    86400

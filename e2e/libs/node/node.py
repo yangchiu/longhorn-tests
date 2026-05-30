@@ -41,17 +41,20 @@ class Node:
         return mount_path
 
     def update_disks(self, node_name, disks, wait=True):
-        logging(f"Updating node {node_name} disks {disks}")
-        for _ in range(self.retry_count):
+        updated = False
+        for i in range(self.retry_count):
+            logging(f"Updating node {node_name} disks {disks} ... ({i})")
             try:
                 node = get_longhorn_client().by_id_node(node_name)
                 node = node.diskUpdate(disks=disks)
-                self.wait_for_disk_update(node_name, len(disks), wait)
-                return node
+                updated = True
+                break
             except Exception as e:
                 logging(f"Failed to update node {node_name} disk: {e}")
             time.sleep(self.retry_interval)
-        assert False, f"Failed to update node {node_name} disk {disks}"
+        assert updated, f"Failed to update node {node_name} disk {disks}"
+
+        self.wait_for_disk_update(node_name, len(disks), wait)
 
     def wait_for_disk_update(self, node_name, disk_num, wait=True):
         for i in range(self.retry_count):

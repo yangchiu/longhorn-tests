@@ -6,7 +6,8 @@ touch "${INFILE}"
 if [[ -n "${LONGHORN_IMAGES_FILE_URL}" ]]; then
 
   LONGHORN_IMAGES_FILE=${PWD}/longhorn-images.txt
-  if [[ "${LONGHORN_IMAGES_FILE_URL}" =~ "oci://dp.apps.rancher.io/charts/suse-storage" ]]; then
+  if [[ "${LONGHORN_IMAGES_FILE_URL}" =~ "oci://dp.apps.rancher.io/charts/suse-storage" ]] || \
+     [[ "${LONGHORN_IMAGES_FILE_URL}" =~ "oci://registry.suse.de/devel/tulip/charts" ]]; then
     set +x
     helm registry login dp.apps.rancher.io --username "${APPCO_USERNAME}" --password "${APPCO_PASSWORD}"
     set -x

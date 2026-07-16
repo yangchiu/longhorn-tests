@@ -66,7 +66,9 @@ until kubectl get nodes >/dev/null 2>&1; do
 done
 
 if [[ "${cni}" == "calico" ]]; then
-  kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.0/manifests/calico.yaml
+  wget https://raw.githubusercontent.com/projectcalico/calico/v3.32.0/manifests/calico.yaml
+  sed -i 's/veth_mtu: "0"/veth_mtu: "1450"/g' calico.yaml
+  kubectl apply -f calico.yaml
 elif [[ "${cni}" == "cilium" ]]; then
   export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
   curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4

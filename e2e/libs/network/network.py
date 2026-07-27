@@ -29,7 +29,7 @@ def setup_control_plane_network_latency(latency_in_ms=0):
             manifest = new_pod_manifest(
                 image=IMAGE_BUSYBOX,
                 command=["nsenter", f"--mount={ns_mnt}", f"--net={ns_net}", "--", "sh"],
-                args=["-c", f"INTERFACE=$(ip route show default | awk '/default/ {{print $5}}') && tc qdisc replace dev $INTERFACE root netem delay {latency_in_ms}ms"],
+                args=["-c", f"INTERFACE=$(ip route show default | awk '/default/ {{print $5}}') && tc qdisc replace dev $INTERFACE root netem delay {latency_in_ms}ms 250ms distribution normal"],
                 node_name=control_plane_node,
                 labels = {LABEL_TEST: LABEL_TEST_VALUE}
             )

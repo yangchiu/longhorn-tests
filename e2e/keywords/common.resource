@@ -100,7 +100,7 @@ Set disk path based on host provider and architecture
             Set Test Variable    ${DISK_PATH}    0000:00:1f.0
         END
     ELSE IF    '${HOST_PROVIDER}' == "harvester"
-        Set Test Variable    ${DISK_PATH}    /dev/vdc
+        Set Test Variable    ${DISK_PATH}    0000:09:00.0
     ELSE IF    '${HOST_PROVIDER}' == "vagrant"
         Set Test Variable    ${DISK_PATH}    /dev/vdb
     END

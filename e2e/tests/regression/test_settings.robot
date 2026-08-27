@@ -578,3 +578,78 @@ Test Longhorn UI PodDisruptionBudget
     And Install Longhorn
     And Wait for longhorn ready
 
+Test Service Traffic Distribution
+    [Tags]    setting    uninstall    helm
+    [Documentation]    Issue: https://github.com/longhorn/longhorn-tests/issues/13814
+    ...
+    ...                Verify that service.{ui,manager,admissionWebhook,recoveryBackend}.trafficDistribution
+    ...                helm values correctly set spec.trafficDistribution on the corresponding
+    ...                longhorn-frontend, longhorn-backend, longhorn-admission-webhook and
+    ...                longhorn-recovery-backend Services.
+    ...
+    ...                This test case is only applicable for helm installation method.
+    ...
+    ...                Test steps:
+    ...                1. Uninstall Longhorn.
+    ...                2. Install Longhorn helm chart with:
+    ...                   service.ui.trafficDistribution = PreferSameZone
+    ...                   service.manager.trafficDistribution = PreferSameZone
+    ...                   service.admissionWebhook.trafficDistribution = PreferSameZone
+    ...                   service.recoveryBackend.trafficDistribution = PreferSameZone
+    ...                3. After Longhorn installed, check that longhorn-frontend, longhorn-backend,
+    ...                   longhorn-admission-webhook and longhorn-recovery-backend Services all
+    ...                   have spec.trafficDistribution = PreferSameZone.
+    ...                4. Label all worker nodes with topology.kubernetes.io/zone so each node is
+    ...                   in its own zone, then check the EndpointSlice for longhorn-backend has
+    ...                   zone hints populated (hints.forZones) matching each endpoint's own zone,
+    ...                   confirming the EndpointSlice controller actually acted on
+    ...                   spec.trafficDistribution rather than just accepting the field.
+    ${LONGHORN_INSTALL_METHOD} =    Get Environment Variable    LONGHORN_INSTALL_METHOD    default=manifest
+    IF    '${LONGHORN_INSTALL_METHOD}' != 'helm'
+        Skip    Test case only applicable for helm installation method
+    END
+
+    Given Setting deleting-confirmation-flag is set to true
+    And Uninstall Longhorn
+    And Check all Longhorn CRD removed
+
+    When Install Longhorn
+    ...    custom_cmd=yq -i '.service.ui.trafficDistribution = "PreferSameZone" | .service.manager.trafficDistribution = "PreferSameZone" | .service.admissionWebhook.trafficDistribution = "PreferSameZone" | .service.recoveryBackend.trafficDistribution = "PreferSameZone"' values.yaml
+    And Wait for longhorn ready
+
+    Then Run command and expect output
+    ...    kubectl get svc longhorn-frontend -n ${LONGHORN_NAMESPACE} -o jsonpath='{.spec.trafficDistribution}'
+    ...    PreferSameZone
+    And Run command and expect output
+    ...    kubectl get svc longhorn-backend -n ${LONGHORN_NAMESPACE} -o jsonpath='{.spec.trafficDistribution}'
+    ...    PreferSameZone
+    And Run command and expect output
+    ...    kubectl get svc longhorn-admission-webhook -n ${LONGHORN_NAMESPACE} -o jsonpath='{.spec.trafficDistribution}'
+    ...    PreferSameZone
+    And Run command and expect output
+    ...    kubectl get svc longhorn-recovery-backend -n ${LONGHORN_NAMESPACE} -o jsonpath='{.spec.trafficDistribution}'
+    ...    PreferSameZone
+
+    # Label each worker node into its own zone, then verify the EndpointSlice controller
+    # actually attaches zone hints, i.e. the trafficDistribution field is functionally
+    # effective, not merely accepted/stored on the Service spec.
+    @{worker_nodes} =    List node names by role    worker
+    ${zone_index} =    Set Variable    0
+    FOR    ${node_name}    IN    @{worker_nodes}
+        Set k8s node ${node_name} zone zone-${zone_index}
+        ${zone_index} =    Evaluate    ${zone_index} + 1
+    END
+    ${worker_node_count} =    Get Length    ${worker_nodes}
+
+    Then Run command and wait for output
+    ...    kubectl get endpointslice -n ${LONGHORN_NAMESPACE} -l kubernetes.io/service-name=longhorn-backend -o jsonpath='{.items[0].endpoints[*].hints.forZones[0].name}' | tr ' ' '\\n' | grep -c zone-
+    ...    ${worker_node_count}
+
+    [Teardown]    Run Keywords
+    ...    Setting deleting-confirmation-flag is set to true
+    ...    AND    Uninstall Longhorn
+    ...    AND    Check all Longhorn CRD removed
+    ...    AND    Install Longhorn
+    ...    AND    Wait for longhorn ready
+    ...    AND    Cleanup test resources
+

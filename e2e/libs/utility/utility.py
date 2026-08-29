@@ -359,6 +359,25 @@ def get_mgr_ips():
     return mgr_ips
 
 
+def is_port_open(ip, port):
+    try:
+        family = socket.AF_INET6 if ':' in ip else socket.AF_INET
+        sock = socket.socket(family, socket.SOCK_STREAM)
+        sock.settimeout(3)
+        return sock.connect_ex((ip, port)) == 0
+    except Exception as e:
+        logging(f"Checking port {port} open on {ip} error: {e}")
+        return False
+    finally:
+        sock.close()
+
+
+def format_host_url(ip, port, scheme="http"):
+    if ':' in ip:
+        return f"{scheme}://[{ip}]:{port}"
+    return f"{scheme}://{ip}:{port}"
+
+
 def get_longhorn_base_url():
     # get base url of longhorn api
     retry_count, retry_interval = get_retry_count_and_interval()
@@ -377,10 +396,8 @@ def get_longhorn_base_url():
                 ips = get_mgr_ips()
                 # check if longhorn manager port is open before calling get_client
                 for ip in ips:
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    mgr_port_open = sock.connect_ex((ip, 9500))
-                    if mgr_port_open == 0:
-                        longhorn_client_url = f"http://{ip}:9500"
+                    if is_port_open(ip, 9500):
+                        longhorn_client_url = format_host_url(ip, 9500)
                         return longhorn_client_url
             except Exception as e:
                 logging(f"Getting longhorn client base url error: {e}, retry ({i}) ...")
@@ -410,10 +427,8 @@ def get_longhorn_client():
                 ips = get_mgr_ips()
                 # check if longhorn manager port is open before calling get_client
                 for ip in ips:
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    mgr_port_open = sock.connect_ex((ip, 9500))
-                    if mgr_port_open == 0:
-                        longhorn_client = from_env(url=f"http://{ip}:9500/v1/schemas")
+                    if is_port_open(ip, 9500):
+                        longhorn_client = from_env(url=f"{format_host_url(ip, 9500)}/v1/schemas")
                         return longhorn_client
             except Exception as e:
                 logging(f"Getting longhorn client error: {e}, retry ({i}) ...")

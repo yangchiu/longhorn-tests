@@ -6,6 +6,8 @@ CURRENT_TIMESTAMP=$(date -u +%s)
 echo "Current Time: $(date -u)"
 THRESHOLD_IN_SEC=$((86400)) # if an instance exists more than 1 day, delete it.
 SUFFIX_ARR=()
+declare -A SUFFIX_REGION_MAP
+ORIGINAL_AWS_REGION="${AWS_REGION:-}"
 
 echo "[Step 1] Get all instances:"
 ALL_INSTANCES=$(aws ec2 describe-instances --filters Name=tag:Owner,Values=longhorn-infra | jq '.Reservations[].Instances[] | select(.State.Name != "terminated") | {LaunchTime: .LaunchTime, InstanceId: .InstanceId, Tags: .Tags}' | jq -c)
@@ -21,15 +23,36 @@ for INSTANCE in ${ALL_INSTANCES[@]}; do
   if [[ $TIME_DIFF -gt $THRESHOLD_IN_SEC ]]; then SUFFIX_ARR+=("$RESOURCE_SUFFIX"); fi
 done
 
+echo "[Step 1b] Get all instances with instance type c5d.2xlarge in ap-northeast-1 (regardless of age):"
+INSTANCE_TYPE_TO_FORCE_DELETE="c5d.2xlarge"
+FORCE_DELETE_REGION="ap-northeast-1"
+FORCE_DELETE_INSTANCES=$(aws ec2 describe-instances --region "${FORCE_DELETE_REGION}" --filters Name=tag:Owner,Values=longhorn-infra Name=instance-type,Values="${INSTANCE_TYPE_TO_FORCE_DELETE}" | jq '.Reservations[].Instances[] | select(.State.Name != "terminated") | {InstanceId: .InstanceId, Tags: .Tags}' | jq -c)
+for INSTANCE in ${FORCE_DELETE_INSTANCES[@]}; do
+  INSTANCE_ID=$(echo "${INSTANCE}" | jq '.InstanceId' | tr -d '"')
+  echo " * Instance ${INSTANCE_ID} (type: ${INSTANCE_TYPE_TO_FORCE_DELETE}, region: ${FORCE_DELETE_REGION}) ==>"
+  RESOURCE_SUFFIX=$(echo "$INSTANCE" | jq '.Tags[] | select(.Key == "Name").Value' | tr -d '"' | rev | cut -d- -f1 | rev)
+  echo "   Resource Suffix: $RESOURCE_SUFFIX (forced deletion regardless of age)"
+  SUFFIX_ARR+=("$RESOURCE_SUFFIX")
+  SUFFIX_REGION_MAP["$RESOURCE_SUFFIX"]="$FORCE_DELETE_REGION"
+done
+
 echo "[Step 2] Get long-running resource suffixes:"
 SUFFIX_ARR=($(echo "${SUFFIX_ARR[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
-echo " * Unexpected Long-running Resource Suffixes: ${SUFFIX_ARR[*]}"
-echo " * Unexpected Long-running Resource Suffixes Count = ${#SUFFIX_ARR[@]}"
+echo " * Unexpected Long-running / Forced Resource Suffixes: ${SUFFIX_ARR[*]}"
+echo " * Unexpected Long-running / Forced Resource Suffixes Count = ${#SUFFIX_ARR[@]}"
 
 echo "[Step 3] Prepare to delete long-running resources:"
 for SUFFIX in ${SUFFIX_ARR[@]}; do
 
   echo " * Deal with Suffix ${SUFFIX} ==>"
+
+  SUFFIX_REGION="${SUFFIX_REGION_MAP[$SUFFIX]:-}"
+  if [[ -n "${SUFFIX_REGION}" ]]; then
+    echo "   (region override: ${SUFFIX_REGION})"
+    export AWS_REGION="${SUFFIX_REGION}"
+  else
+    export AWS_REGION="${ORIGINAL_AWS_REGION}"
+  fi
 
   echo "   (1) delete instances:"
   INSTANCE_IDS=$(aws ec2 describe-instances --filters Name=tag:Name,Values=*"${SUFFIX}"* | jq '.Reservations[].Instances[].InstanceId' | tr -d '"')
@@ -149,6 +172,8 @@ for SUFFIX in ${SUFFIX_ARR[@]}; do
   done
 
 done
+
+export AWS_REGION="${ORIGINAL_AWS_REGION}"
 
 echo "[Step 4] Prepare to delete long-running resources without owner:"
 ALL_INSTANCES=$(aws ec2 describe-instances --query 'Reservations[].Instances[?!not_null(Tags[?Key == `Owner`].Value)] | []' | jq '.[] | select(.State.Name != "terminated") | {LaunchTime: .LaunchTime, InstanceId: .InstanceId, Tags: .Tags}' | jq -c)

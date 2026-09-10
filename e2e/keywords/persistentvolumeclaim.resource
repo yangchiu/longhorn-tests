@@ -66,6 +66,13 @@ Volume of persistentvolumeclaim ${claim_id} should not be attached to node ${nod
     wait_for_volume_attached    ${volume_name}
     wait_for_volume_not_attached_to_node    ${volume_name}    ${node_name}
 
+Volume of persistentvolumeclaim ${claim_id} should be attached to node ${node_id}
+    ${claim_name} =    generate_name_with_suffix    claim    ${claim_id}
+    ${volume_name} =    get_volume_name_from_persistentvolumeclaim    ${claim_name}
+    ${node_name} =    get_node_by_index    ${node_id}
+    wait_for_volume_attached    ${volume_name}
+    wait_for_volume_attached_to_node    ${volume_name}    ${node_name}
+
 Volume of persistentvolumeclaim ${claim_id} should have running replicas on node ${node_id}
     ${claim_name} =    generate_name_with_suffix    claim    ${claim_id}
     ${volume_name} =    get_volume_name_from_persistentvolumeclaim    ${claim_name}

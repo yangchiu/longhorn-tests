@@ -77,7 +77,7 @@ main(){
       else
           install_backupstores
       fi
-      setup_azurite_backup_store
+      #setup_azurite_backup_store
   fi
   if [[ "${TF_VAR_cis_hardening}" == true ]]; then
     install_backupstores_networkpolicy
@@ -90,9 +90,9 @@ main(){
   patch_coredns_ipv6_name_servers
   scale_up_coredns
 
-  if [[ "${DISTRO}" != "talos" ]]; then
-    longhornctl_check
-  fi
+  #if [[ "${DISTRO}" != "talos" ]]; then
+  #  longhornctl_check
+  #fi
 
   if [[ "${DISTRO}" == "talos" ]]; then
     install_metrics_server

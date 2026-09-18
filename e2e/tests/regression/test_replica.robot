@@ -343,6 +343,66 @@ Test Reusing Failed Replica After Node Back
     And Check volume 0 replica reused on node 1
     And Check volume 0 data is intact
 
+Test Crashed Replica Not Reused After Node Back
+    [Documentation]
+    ...    Follow-up of "Test Reusing Failed Replica After Node Back".
+    ...
+    ...    Verify that when a Kubernetes node is removed and the replica
+    ...    residing on it is permanently crashed/corrupted before the node is
+    ...    added back to the cluster, Longhorn fails to reuse the crashed
+    ...    replica. Instead, after the replica-replenishment-wait-interval
+    ...    elapses, Longhorn creates a brand-new replica and rebuilds it, and
+    ...    the volume recovers to healthy.
+    ...
+    ...    Issue: https://github.com/longhorn/longhorn/issues/11657
+    ...
+    ...    For v1 volumes, the replica is crashed by SSH-ing directly to the
+    ...    node and making the replica's data directory immutable:
+    ...        $ chattr -R +i /var/lib/longhorn/replicas/test-1-7099acd8
+    ...    For v2 volumes, replicas are backed by SPDK lvols instead of a
+    ...    plain host directory, so `chattr` doesn't apply, and
+    ...    `go-spdk-helper lvol delete` doesn't permanently fail the replica
+    ...    either (Longhorn can still rebuild/reuse it afterwards). Instead,
+    ...    the lvol backing the replica is made read-only directly via the
+    ...    SPDK JSON-RPC socket (`bdev_lvol_set_read_only`), which achieves
+    ...    the same goal of permanently preventing the replica from being
+    ...    reused.
+    ...
+    ...    Steps:
+    ...    1. Create and attach a volume, then write data to the volume.
+    ...    2. Record the replica name on a replica node, then crash that
+    ...       replica on the node so it can never be reused (chattr immutable
+    ...       directory for v1, delete lvol for v2), while the node is still
+    ...       part of the cluster (crashing after removing the node would
+    ...       break kubectl exec into the v2 instance-manager pod, since the
+    ...       API server can no longer proxy exec sessions to a node whose
+    ...       Node object has been removed).
+    ...    3. Directly remove that Kubernetes node.
+    ...    4. Wait for the related replica failure (volume becomes degraded).
+    ...    5. Reboot the removed node to add it back to the cluster.
+    ...    6. Longhorn tries to reuse the failed replica, but fails since it
+    ...       was crashed.
+    ...    7. After the replica-replenishment-wait-interval, a new replica is
+    ...       created and rebuilt. The volume recovers to healthy.
+    ...    8. Verify the replica on the returned node was NOT reused (a new
+    ...       replica was created instead of the original one).
+    ...    9. Verify the data of the volume is intact.
+    Given Setting replica-replenishment-wait-interval is set to 300
+    And Create volume 0 with    dataEngine=${DATA_ENGINE}
+    And Attach volume 0 to node 0
+    And Wait for volume 0 healthy
+    And Write data to volume 0
+    And Record volume 0 replica name on node 1
+    And Crash volume 0 replica on node 1
+
+    When Delete node 1
+    Then Wait for volume 0 degraded
+
+    When Reboot node 1
+    Then Wait for volume 0 healthy
+    And Check volume 0 replica not reused on node 1
+    And Check volume 0 data is intact
+
 Test Large Volume Fast Replica Rebuilding Performance
     [Tags]    snapshot-purge
     [Documentation]

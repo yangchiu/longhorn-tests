@@ -58,3 +58,14 @@ Wait for volume ${volume_id} replica on node ${node_id} failed
     ${volume_name} =    generate_name_with_suffix    volume    ${volume_id}
     ${node_name} =    get_node_by_index    ${node_id}
     wait_for_replica_failed    ${volume_name}    ${node_name}
+
+Crash volume ${volume_id} replica on node ${node_id}
+    [Documentation]    Permanently crash the replica previously recorded by
+    ...    "Record volume ${volume_id} replica name on node ${node_id}" so it
+    ...    can never be reused. For v1, the replica's data directory on the
+    ...    host is made immutable with `chattr -R +i`. For v2, since replicas
+    ...    are backed by SPDK lvols instead of a host directory, the lvol is
+    ...    made read-only directly via the SPDK JSON-RPC socket
+    ...    (`bdev_lvol_set_read_only`) to achieve the same effect.
+    ${node_name} =    get_node_by_index    ${node_id}
+    crash_replica    ${node_name}    ${original_replica_name}    ${DATA_ENGINE}

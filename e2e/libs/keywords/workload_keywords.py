@@ -100,10 +100,17 @@ class workload_keywords:
     def get_workload_pod_name(self, workload_name, namespace="default"):
         return get_workload_pod_names(workload_name, namespace)[0]
 
+    def get_workload_pod_names(self, workload_name, namespace="default"):
+        return get_workload_pod_names(workload_name, namespace)
+
     def get_workload_pod_node_name(self, workload_name, namespace="default"):
         pods = get_workload_pods(workload_name, namespace=namespace)
         assert len(pods) > 0, f"No pods found for workload {workload_name} in namespace {namespace}"
         return pods[0].spec.node_name
+
+    def get_all_workload_node_names(self, workload_name, namespace="default"):
+        return get_all_workload_node_names(workload_name, namespace=namespace)
+
 
     def get_workload_persistent_volume_claim_name(self, workload_name):
         return get_workload_persistent_volume_claim_name(workload_name)

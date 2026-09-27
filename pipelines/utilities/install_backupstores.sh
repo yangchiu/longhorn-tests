@@ -7,7 +7,7 @@ source pipelines/utilities/longhorn_namespace.sh
 install_backupstores(){
   get_longhorn_namespace
 
-  MINIO_BACKUPSTORE_URL="https://raw.githubusercontent.com/longhorn/longhorn-tests/master/manager/integration/deploy/backupstores/minio-backupstore.yaml"
+  MINIO_BACKUPSTORE_URL="https://raw.githubusercontent.com/yangchiu/longhorn-tests/fbc3e9dd78f1a2409a78a702191b29c771a41381/manager/integration/deploy/backupstores/minio-backupstore.yaml"
   wget "${MINIO_BACKUPSTORE_URL}" -O minio-backupstore.yaml
   sed -i "s/longhorn-system/${LONGHORN_NAMESPACE}/g" minio-backupstore.yaml
 

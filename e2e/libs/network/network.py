@@ -108,11 +108,10 @@ def setup_control_plane_network_latency(latency_in_ms=0):
         logging(f"Setting up control plane network latency with {latency_in_ms} ms")
         control_plane_nodes = Node().list_node_names_by_role("control-plane")
         for control_plane_node in control_plane_nodes:
-            ns_mnt = os.path.join(HOST_ROOTFS, "proc/1/ns/mnt")
             ns_net = os.path.join(HOST_ROOTFS, "proc/1/ns/net")
             manifest = new_pod_manifest(
                 image=IMAGE_BUSYBOX,
-                command=["nsenter", f"--mount={ns_mnt}", f"--net={ns_net}", "--", "sh"],
+                command=["nsenter", f"--net={ns_net}", "--", "sh"],
                 args=["-c", f"INTERFACE=$(ip route show default | awk '/default/ {{print $5}}') && tc qdisc replace dev $INTERFACE root netem delay {latency_in_ms}ms"],
                 node_name=control_plane_node,
                 labels = {LABEL_TEST: LABEL_TEST_VALUE}
@@ -125,11 +124,10 @@ def cleanup_control_plane_network_latency():
     logging("Cleaning up control plane network latency")
     control_plane_nodes = Node().list_node_names_by_role("control-plane")
     for control_plane_node in control_plane_nodes:
-        ns_mnt = os.path.join(HOST_ROOTFS, "proc/1/ns/mnt")
         ns_net = os.path.join(HOST_ROOTFS, "proc/1/ns/net")
         manifest = new_pod_manifest(
             image=IMAGE_BUSYBOX,
-            command=["nsenter", f"--mount={ns_mnt}", f"--net={ns_net}", "--", "sh"],
+            command=["nsenter", f"--net={ns_net}", "--", "sh"],
             args=["-c", f"INTERFACE=$(ip route show default | awk '/default/ {{print $5}}') && tc qdisc del dev $INTERFACE root || true"],
             node_name=control_plane_node,
             labels = {LABEL_TEST: LABEL_TEST_VALUE}

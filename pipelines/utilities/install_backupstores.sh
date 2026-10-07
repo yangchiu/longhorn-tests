@@ -40,7 +40,7 @@ install_backupstores_from_lh_repo(){
   export AWS_CERT_KEY="${MINIO_CERT_KEY}"
   set -x
 
-  git clone https://github.com/longhorn/longhorn.git
+  git clone --branch rustfs-ipv6 https://github.com/yangchiu/longhorn.git
   ./longhorn/scripts/generate-backupstore-credentials.sh all --no-encode
   kubectl apply -k ./longhorn/deploy/backupstores/overlays/generated-credentials/all/
 }

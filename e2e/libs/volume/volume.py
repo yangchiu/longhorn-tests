@@ -191,6 +191,9 @@ class Volume(Base):
     def wait_for_volume_unknown(self, volume_name):
         self.volume.wait_for_volume_robustness(volume_name, "unknown")
 
+    def wait_for_volume_not_healthy(self, volume_name):
+        self.volume.wait_for_volume_robustness_not(volume_name, "healthy")
+
     def get_endpoint(self, volume_name):
         return self.volume.get_endpoint(volume_name)
 

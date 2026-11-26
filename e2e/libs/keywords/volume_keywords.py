@@ -501,6 +501,10 @@ class volume_keywords:
     def wait_for_volume_unknown(self, volume_name):
         self.volume.wait_for_volume_unknown(volume_name)
 
+    def wait_for_volume_not_healthy(self, volume_name):
+        logging(f'Waiting for volume {volume_name} to be not healthy')
+        self.volume.wait_for_volume_not_healthy(volume_name)
+
     def wait_for_volume_deleted(self, volume_name):
         self.volume.wait_for_volume_deleted(volume_name)
 
